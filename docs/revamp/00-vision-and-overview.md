@@ -16,7 +16,10 @@ it feels immediate and fluid — **liquid smooth** — from the first click to t
 questions while working, reading and summarising local files, small desktop actions behind
 approvals, and a hands-free conversation when typing is inconvenient (12 §0.1). The same build is
 also the project's public engineering evidence. That is an *outcome* of building it well, not a
-design input: no component exists only to impress a reviewer (ADR-0004, ADR-0021).
+design input: no component exists only to impress a reviewer (ADR-0004, ADR-0021). **Decided
+2026-10-10:** daily companion first, portfolio second. Building for real daily use forces exactly the
+properties a reviewer should see: low latency, clean interruption, smoothness, safety and honest
+measurements. Building for the demo first tends to produce something that only works in the demo.
 
 **Why it is worth building.** Existing VRM desktop companions — for example
 [AikoMate](https://gg.deals/application/aikomate/), AIvy,
@@ -31,8 +34,11 @@ not depend on or copy any of them.)
 
 The v1 bar is the acceptance contract in 12/14; nothing here relaxes it. The reference column shows
 where each target sits against published guidance, so the targets are understood rather than
-arbitrary. The north-star column is direction for after v1; it is **not** a v1 requirement and needs a
-scoped decision before work starts.
+arbitrary. **Decided 2026-10-10:** the north-star column is direction for after v1 only; it is
+**not** a v1 requirement and needs a scoped decision before work starts. Making ≤ 0.8 s a v1 gate would
+force sub-sentence streaming and runtime changes before the basic local path is even proven (Kokoro
+currently takes 0.6–2.2 s per sentence on CPU). v1 measurements use the same boundaries as the north
+star (speech end → first audible output, 14 §5), so the remaining gap is always visible.
 
 | Outcome | v1 bar (normative) | External reference | North star (post-v1) |
 |---|---|---|---|

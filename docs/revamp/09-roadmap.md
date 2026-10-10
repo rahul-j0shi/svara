@@ -296,11 +296,14 @@ Tasks
 1. **Browser extension** (see 10).
 2. More platforms: native Wayland (dropping XWayland once GNOME offers what we need), other
    distros/desktops (KDE supports layer-shell), then macOS and Windows behind the same interfaces.
-3. **Avatar Studio**, in bounded steps that write the same files v1 uses: (a) form controls —
-   colour pickers, sliders and toggles over `avatar.json` with live preview; (b) look presets;
-   (c) persona templates and switchable personas (12 §0.2); (d) a voice gallery with previews;
-   (e) avatar inventory: item packages, then publish/share (03 §2). Each step is a separate scoped
-   proposal with its own ACs.
+3. **Avatar Studio**, in bounded steps that write the same files v1 uses (order decided 2026-10-10):
+   (a) **form controls** — colour pickers, sliders and toggles over `avatar.json` with live preview;
+   the largest daily-use gain, built on the v1 editor and schema; (b) **voice gallery** with previews —
+   cheap, because `voice.voices`/`voice.preview` already exist (13 §7.4); (c) **look presets** — saved
+   `avatar.json` fragments, which need (a) first; (d) **characters** — persona templates and switchable
+   personas (12 §0.2), each bundling persona + voice + look preset, so it needs (b) and (c);
+   (e) **inventory**: item packages, then publish/share (03 §2) — last, because it adds a package
+   format, licence and trust questions. Each step is a separate scoped proposal with its own ACs.
 4. Wake word, long-term memory (summaries in SQLite + retrieval).
 5. MCP resources/prompts, remote MCP OAuth.
 6. Speech-to-speech realtime pipeline plugin.

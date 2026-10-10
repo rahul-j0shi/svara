@@ -286,8 +286,8 @@ simple and a code editor where it is structured. Nothing requires a restart.
 | Brain and skills: model, provider, skills, MCP, permissions | Models & accounts, Skills, MCP servers, Permissions (F19/F24/F28/F29) | Next turn |
 
 **Later — Avatar Studio (post-v1, 09 "After v1").** Friendlier tools that write the same files:
-colour pickers and sliders over `avatar.json`, look presets, persona templates and switchable
-personas, a voice gallery with previews, then the inventory/publishing work in 03 §2. Each needs its
+form controls (colour pickers and sliders over `avatar.json`), a voice gallery with previews, look
+presets, switchable characters (persona + voice + look), then the inventory/publishing work in 03 §2. Each needs its
 own scoped proposal; none is a v1 requirement (12 §0.2).
 
 ## 7. Frontend structure

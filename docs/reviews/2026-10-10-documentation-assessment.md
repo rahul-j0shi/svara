@@ -56,9 +56,15 @@ beyond B3's per-frame budget.
 `git diff --check` pass; a repository-wide Markdown link check finds no broken local links outside
 code blocks in the verbatim review. No product behaviour was tested; none is claimed.
 
-## 5. Decisions for the user
+## 5. Decisions (taken 2026-10-10 at the user's request)
 
-- **End-goal framing:** 00 states "daily companion first, portfolio as an outcome". If the portfolio
-  is meant to lead, say so and 00 §1/09 are adjusted.
-- **North-star targets** (00 §1.1) are proposals for after v1, not commitments.
-- **Avatar Studio** order and scope (09) are proposals; each step needs a go-ahead.
+- **End-goal framing: daily companion first, portfolio second** (00 §1). Real daily use forces the
+  properties worth demonstrating; demo-first design produces something that only works in the demo,
+  and the engineering review already warned against portfolio appeal as an architecture input.
+- **North-star targets are after-v1 direction only** (00 §1.1). A v1 ≤ 0.8 s gate would force
+  streaming and runtime changes before the basic local path is proven; v1 measures on the same
+  boundaries so the gap stays visible.
+- **Avatar Studio order:** form controls → voice gallery → look presets → characters (persona + voice
+  + look) → inventory (09). Highest daily value first, cheapest reuse second, then dependency order
+  (presets need form controls; characters need presets and voices); inventory last because it adds
+  packaging, licence and trust work. Each step still needs its own scoped proposal before it starts.
