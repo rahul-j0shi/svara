@@ -7,9 +7,9 @@ sync quality, Python wheel support) are proven first.
 
 ## Portfolio-ready milestone
 
-The plan is ordered by sequence and scope only, with no dates or durations. **Because this is for a job
-search, there is an earlier cut: "v0.5 — portfolio preview"** at the end
-of Phase 4a (read-only tools):
+The plan is ordered by sequence and scope only, with no dates or durations. The end goal is a daily
+companion (00 §1); a public, demonstrable cut also matters, so there is an earlier milestone,
+**"v0.5 — portfolio preview"**, at the end of Phase 4a (read-only tools):
 
 - Floating avatar, drag, context menu, bubble, conversations
 - Voice in/out with the full lip-sync engine and the lip-sync lab
@@ -296,8 +296,12 @@ Tasks
 1. **Browser extension** (see 10).
 2. More platforms: native Wayland (dropping XWayland once GNOME offers what we need), other
    distros/desktops (KDE supports layer-shell), then macOS and Windows behind the same interfaces.
-3. Avatar inventory: item packages, then publish/share.
-4. Wake word, multiple personas, long-term memory (summaries in SQLite + retrieval).
+3. **Avatar Studio**, in bounded steps that write the same files v1 uses: (a) form controls —
+   colour pickers, sliders and toggles over `avatar.json` with live preview; (b) look presets;
+   (c) persona templates and switchable personas (12 §0.2); (d) a voice gallery with previews;
+   (e) avatar inventory: item packages, then publish/share (03 §2). Each step is a separate scoped
+   proposal with its own ACs.
+4. Wake word, long-term memory (summaries in SQLite + retrieval).
 5. MCP resources/prompts, remote MCP OAuth.
 6. Speech-to-speech realtime pipeline plugin.
 7. Free-threaded Python build once all native deps support it.

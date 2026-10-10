@@ -54,6 +54,7 @@ Errors & edge cases · Depends on · Phase · Acceptance criteria.
 | Wake word | Post-v1 |
 | Realtime speech-to-speech models | Post-v1 (a separate pipeline plugin) |
 | Avatar inventory, marketplace, publishing | Post-v1 (03 §2) |
+| Form-based looks editor (colour pickers, sliders, presets), persona templates and a voice gallery | Post-v1 **Avatar Studio** (09 "After v1"); v1 edits looks as schema-checked `avatar.json` with live preview (F14, R13) |
 | In-app 3D mesh editing or avatar creation | Use Blender/VRoid outside the app |
 | Third-party Python plugins | Post-v1 (01 §3) |
 | MCP resources, prompts, sampling, elicitation, OAuth | Post-v1; v1 is MCP *tools* only |
@@ -142,7 +143,7 @@ permission rules, on the dev machine at scale 1.0 with the display refresh rate 
 |---|---|---|
 | B1 | Input acknowledgement: double-click, right-click menu, Type, approval/bubble buttons, hover affordance | Visible response in the next painted frame ≤ 100 ms after the input event (Event Timing input-to-next-paint) |
 | B2 | Frame consistency while speaking, dragged, hovered or transitioning (60 fps target) | ≥ 99% of frame intervals ≤ 25 ms and none > 50 ms in each 60 s window; idle (30 fps): ≥ 99% ≤ 50 ms, none > 100 ms |
-| B3 | Avatar main-thread blocking | No task > 50 ms while speaking, dragged or transitioning; during an explicit model change each slice ≤ 100 ms while the previous model stays visible |
+| B3 | Avatar main-thread work | Per-frame script work (03 §5.1 steps 2–6) ≤ 10 ms at p99 at the 60 fps target; no task > 50 ms while speaking, dragged or transitioning; during an explicit model change each slice ≤ 100 ms while the previous model stays visible |
 | B4 | Drag tracking | Window follows the pointer with median lag ≤ 2 display frames; no jump on grab or release |
 | B5 | Transitions | Start ≤ 100 ms (F04 AC1), finish within their 17 §2 token; an interrupted transition continues from its current value without a discontinuity |
 | B6 | Audio gain changes (start, stop, pause, duck, volume, mute) | 5–20 ms ramp, no click; contained within F13/F27 stop bounds |
@@ -491,7 +492,7 @@ reload?".
 |---------|---------------------------|
 | Models & accounts | F19: provider list, add/remove, API key entry (write-only), test connection, model per role, effort (Claude), subscription status |
 | Voice | F09/F10/F12: mic mute, source, VAD sensitivity + end-silence, STT provider/model, TTS provider/voice/speed, output volume + pause, preview, echo-cancel setup (F13) |
-| Avatar looks | F14: `avatar.json` editor + live preview, import `.vrm`, reset |
+| Avatar looks | F14: `avatar.json` editor + live preview, import `.vrm`, reset; avatar size slider (`ui.avatar.scale`, F02) |
 | Persona | F22: `persona.md` editor + "test in bubble" |
 | Skills | F29: list with toggles, new/edit/delete/import |
 | MCP servers | F28: `mcp.json` editor + per-server status and toggle |
@@ -1602,3 +1603,7 @@ same change.
 - 2026-10-10 — §0.5 experience budgets B1–B9 and F02 frame-rate elevation during motion. Reason: the
   user requires a liquid-smooth experience and no plan defined how it must feel (ADR-0022, 17). Global
   checks X26–X30 in 14; no feature AC changed.
+- 2026-10-10 — B3 adds the ≤ 10 ms per-frame script budget (RAIL guidance) and the animation layer
+  stack (03 §5.1) it measures; non-goals name the post-v1 Avatar Studio. Reason: documentation
+  assessment ([review](../reviews/2026-10-10-documentation-assessment.md)) found frame composition
+  and the customization path unspecified.

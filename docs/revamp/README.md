@@ -1,12 +1,13 @@
-# Svara — Revamp Plan
+# Svara — the plan
 
-This folder is the complete plan for rebuilding this repository into a **desktop-native, voice-first,
-plugin-first AI assistant with an animated 3D avatar** that lives on your screen.
+This folder is the complete plan for rebuilding the repository into a **voice-first desktop companion
+for Ubuntu with an animated 3D avatar**. New here? Read [00 — Vision and overview](00-vision-and-overview.md)
+first: the end goal, how one conversation flows, a map of every component, reading paths and a
+glossary. This page indexes the documents and lists the key decisions.
 
-The previous code (`main.py`, `talking-head/`, `backend/`, `frontend/`) was a learning prototype. It
-is kept in git history at merge commit `2389194` and was removed from `main` in Phase 0. The planned
-`v0-prototype` tag has not been pushed to the remote yet (awaiting approval, 16 §7). Nothing in it is
-carried forward except the idea of provider adapters.
+The earlier browser prototype (`main.py`, `talking-head/`, `backend/`, `frontend/`) was removed in
+Phase 0 and survives in Git history at merge commit `2389194`. Only the idea of provider adapters
+carries forward. (Its `v0-prototype` tag awaits publication approval, 16 §7.)
 
 ## Project identity
 
@@ -25,18 +26,19 @@ voice-first design and its vowel-driven lip-sync core. These identifiers are can
 
 ## The product in one paragraph
 
-A small 3D character sits in the bottom-right corner of your desktop, always on top. You can drag it
-anywhere. Double-click it and it listens; or type to it. It answers as a speech bubble, out loud with
-accurate lip sync and facial expressions, or both. It can act on your computer through tools that sit
-behind a permission system (read-only by default). It connects to any LLM provider, to MCP servers,
-and loads Agent Skills that you can write inside the app. v1 runs on Ubuntu. Right-click gives you **Talk / Type /
-Conversations / Configure / Exit**. Every feature can be switched on or off live. The same core will
-later drive a browser extension; that is planned for, not built.
+A small 3D character sits in the bottom-right corner of your desktop, always on top and never in the
+way. Drag it anywhere. Double-click it and it listens, or type to it. It answers in a speech bubble,
+out loud with lip sync and facial expressions, or both. It can act on your computer through tools
+behind a permission system (read-only by default). It works with any LLM provider, MCP servers and
+Agent Skills you write in the app, and its look, voice and persona are yours to change (02 §6.1).
+Right-click gives every control; every feature can be switched on or off live. v1 runs on Ubuntu;
+a browser extension using the same core comes later (10).
 
 ## Documents
 
 | # | Document | What it decides |
 |---|----------|-----------------|
+| 00 | [Vision & overview — start here](00-vision-and-overview.md) | End goal and success measures, one conversation end to end, component atlas, reading paths, glossary |
 | 01 | [Architecture](01-architecture.md) | Components, the plugin kernel (spatiotemporal composability), protocol, concurrency, repo layout |
 | 02 | [Desktop shell & UI](02-desktop-shell-and-ui.md) | Electron, floating window, drag, context menu, bubble, conversations, config panel |
 | 03 | [Avatar, lip sync & expressions](03-avatar-and-lipsync.md) | VRM instead of Ready Player Me, phoneme → viseme engine, expressions, gestures, looks-as-code |
@@ -103,43 +105,30 @@ later drive a browser extension; that is planned for, not built.
 | Extensibility | MCP client (stdio + streamable HTTP, Claude-Desktop-compatible `mcp.json`), Agent Skills (`SKILL.md`), `persona.md` | — |
 | Storage | JSON config + OS keychain for secrets + SQLite event log | `sessionStorage` API keys |
 
-## Decided
+## Other standing decisions
 
-- **Platform:** Ubuntu only for v1 (24.04 LTS and 26.04 LTS). See 02 §1.
-- **Primary dev/demo machine:** Ubuntu 24.04 with Intel/AMD graphics. 26.04 is checked in a VM;
-  NVIDIA is best-effort and untested.
-- **Language:** no language-specific work. The assistant replies in the user's language. See 03 §4.6.
-- **Claude:** your subscription first (through the official Agent SDK, using the Claude Code login you
-  do yourself), the Anthropic API key second and used for public demos. See 05 §3.
+- **Machines:** primary dev/demo machine is Ubuntu 24.04 with Intel/AMD graphics; 26.04 is checked in
+  a VM; NVIDIA is best-effort and untested.
 - **Default avatar:** one exact, licence-verified, qualified free VRM chosen in T0.12 (publisher-
-  designated CC0 first). VRoid presets are not CC0 (corrected 2026-10-10). See 03 §1 and ADR-0007.
-- **Planning style:** no dates or durations. Sequence, scope and exit criteria only. See 09.
-- **Extension identity:** the future extension pairs with the desktop app using a one-time code, not
-  a Claude login. See 10 §3.
-- **Resume:** the bullets are rewritten to match what is actually built. The draft is finalised in
-  Phase 7.
-- **Feature scope:** [12 — Feature specification](12-feature-specification.md) is the authoritative
-  list of what v1 does and doesn't do.
-- **Desktop UX:** the production desktop surface is only the floating character on transparency.
-  Speech, approval, error and type UI is transient; Configure and Conversations are separate
-  on-demand windows; spike controls, terminals and stats never ship. The complete start/hide/mute/
-  volume/quit/uninstall recovery matrix is in 02 §3.1.
+  designated CC0 first; VRoid presets are not CC0). See 03 §1 and ADR-0007.
+- **Claude:** your subscription first (official Agent SDK, using your own Claude Code login), the
+  Anthropic API key second. See 05 §3.
+- **Desktop UX:** idle shows only the character on transparency; speech, approval, error and type UI
+  is transient; Configure and Conversations are separate on-demand windows; spike controls never
+  ship. The full control and recovery matrix is 02 §3.1; how it must feel is 17.
+- **Customisation:** file-first with live preview in v1; friendlier Avatar Studio tools after v1
+  (02 §6.1, 09).
+- **Planning style:** no dates or durations — sequence, scope and exit criteria only (09).
+- **Extension identity:** the future extension pairs with a one-time code, not a Claude login (10 §3).
+- **Resume bullets:** written last, from what actually shipped (T7.6).
 
-## Planning complete; implementation gates remain
+## Status
 
-**2026-10-10:** the five-round engineering review is adopted (ADR-0017–0021, [16](16-lab-track-and-review-findings.md)).
-It corrects the avatar licence claim, fixes the performance and ownership contracts, and adds a
-bounded lab track that may proceed while Phase 0 platform gates wait for Wayland environments. No
-code finding is fixed yet; the next lab unit is V-A.1.
-
-
-Paused at T0.10 for the [foundation audit](../reviews/2026-09-27-foundation-audit.md). Open gates:
-Wayland on both releases, idle-focus/typing behavior, visible lip-sync accuracy and resource budgets.
-T0.11/T0.12 have not started. Accepted design decisions are not completed product features.
-The 2026-10-02 planning checkpoint resolves task ordering, partial-vs-final acceptance, missing
-configuration/protocol operations and failure decisions. Coqui is removed from v1 by user choice.
-Start with [15's foundation work package](15-developer-handoff.md#4-first-actionable-work-package--finish-the-current-step),
-then follow 13's acyclic dependency graph. Do not skip to new features while foundation gates fail.
+Phase 0 is open. Platform gates (Wayland on both releases, idle focus/typing, visible lip-sync
+accuracy, resource budgets) wait for Wayland environments; T0.11/T0.12 have not started. Meanwhile the
+bounded lab track (16) works on spike and pure package code; next unit **V-A.1**. Accepted decisions are
+not completed features. Current detail: [15](15-developer-handoff.md) and
+[16](16-lab-track-and-review-findings.md); history: [reviews](../reviews/).
 
 ## Research sources (checked Sep 2026)
 

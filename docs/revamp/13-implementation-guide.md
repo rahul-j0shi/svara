@@ -8,18 +8,14 @@ the features and acceptance criteria (AC) from 12 that it must satisfy.
 
 ## 1. How work flows
 
-**Checkpoint:** T0.10 resumed on 2026-10-02 after [foundation review](../reviews/2026-09-27-foundation-audit.md).
-Its opt-in managed-input-hint candidate passes local X11 focus/typing/drag checks; target Wayland
-evidence remains open in [the spike report](../spikes/T0.10-ubuntu-integration.md).
-The planning review is recorded in [14](14-acceptance-and-integration.md). Close corrections and
-open gates before T0.11. A checkpoint merge is not a passed acceptance test.
-
-**2026-10-10:** the [engineering review, rounds 1–5](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
-is adopted through ADR-0017–0021 and [16](16-lab-track-and-review-findings.md). The product task graph
-below is unchanged in order and dependencies; affected "Done when" cells now carry the review's
-regressions. A separate, bounded **lab track** (16 §3, work units `V-…`) may proceed while Phase 0
-platform gates are blocked, because it touches only spike and pure package code. A lab result never
-marks a task, gate or AC passed (ADR-0021).
+**Where work stands:** Phase 0, task T0.10 is open. Its managed-input-hint candidate passes local X11
+focus/typing/drag checks; Wayland evidence is still required ([spike report](../spikes/T0.10-ubuntu-integration.md),
+[foundation audit](../reviews/2026-09-27-foundation-audit.md)). Close open gates before T0.11. A
+separate, bounded **lab track** (16 §3, work units `V-…`) proceeds meanwhile on spike and pure package
+code; a lab result never marks a task, gate or AC passed (ADR-0021). The
+[engineering review](../reviews/2026-10-09-engineering-review-rounds-1-5.md) left task order unchanged
+and added its regressions to the affected "Done when" cells. A checkpoint merge is not a passed
+acceptance test.
 
 1. Pick the next task in §8 whose dependencies and phase gates are done. The scheduled pull-forwards
    below are intentional; numeric phase labels are not a substitute for the dependency graph.
@@ -545,7 +541,7 @@ tests pass.
 | T3.6 | TTS port + `kokoro` runner + `elevenlabs` + contract suite (incl. alignment tier) | F12 (AC1) | T3.1, T0.8 | ACs pass; contract suite checks literal stdin G2P (`--help`/leading-dash text), declared inventory with no silent `sil`, frame-count extent, and model-slot ownership through native exit under repeated cancel/replace (ADR-0017/0018/0019) |
 | T3.7 | Performance engine: espeak G2P, IPA→viseme table, tiers A/B/D, shape rules, envelope | F15 (AC1) | T3.5, T3.6 | Independently annotated bilabial test passes; generator owns timing only, keys stay in extent, envelope from played PCM with per-voice calibration, unknown phones counted (ADR-0017/0018) |
 | T3.8 | `PerformancePlayer` + retarget maps + gapless scheduling on one AudioContext + autoplay unlock | F15 (AC2–3), F12 (AC2) | T3.7, T2.4 | ACs pass; player is the single articulation owner and final rig-weight regressions (PP/FF→vowel, short closure, overlap, end) pass; mismatched segments rejected before playback; output-clock sampling with recorded fallback (ADR-0017/0018); playback start/stop ramps (X30) |
-| T3.9 | Expressions & gestures + sentiment fallback | F16 (AC1–3) | T3.8 | ACs pass |
+| T3.9 | Expressions & gestures + sentiment fallback | F16 (AC1–3) | T3.8 | ACs pass; the per-frame layer stack and channel ownership (03 §5.1) have compose goldens; per-frame work within B3 |
 | T3.10 | Response modes + bubble speech sync + pause voice + live output volume; minimal Voice controls and preview | F11, F12, F05 (AC2) | T3.8, T3.9 | ACs pass; usable Voice settings now, final polish at T6.1; all gain changes ramp without clicks (X30) |
 | T3.11 | Barge-in + PipeWire echo-cancel setup/remove UI + duck-and-gate fallback | F13 (AC1–3) | T3.3, T3.10 | ACs pass with speakers |
 | T3.12 | Lip-sync lab + golden export/load | F18 | T3.8 | A lab export passes as a golden; reviewed landmark annotations and graph/output clock shown; lab-track corpus and evidence (16 §4) imported, not re-invented |
@@ -594,7 +590,7 @@ the registry and permission engine; its ID does not imply execution before them.
 | ID | Task | Implements | Depends on | Done when |
 |----|------|-----------|------------|-----------|
 | T6.1 | Remaining Configure sections (Voice, Features + plugin status/Retry, Advanced); every flag and config key | F08, F30 final integration | T5.5, T6.2, T6.4, T6.5, T6.6 | F08 ACs across all sections; every supported setting reachable |
-| T6.2 | Avatar looks editor + live preview + VRM import with licence check (before preview) | F14 (AC1–2) | T3.15, T2.10 | ACs pass |
+| T6.2 | Avatar looks editor + live preview + VRM import with licence check + size slider (before preview) | F14 (AC1–2), F08 | T3.15, T2.10 | ACs pass; size slider writes `ui.avatar.scale` with an animated resize (B5) |
 | T6.3 | First-run onboarding | F35 | T6.1 | AC on a clean 24.04 VM |
 | T6.4 | Retention, clear history, settings export/import (before preview) | F32 (AC2), F08 | T3.15, T2.10 | ACs and X15 safe archive/retention tests pass |
 | T6.5 | Diagnostics bundle | F36 (AC) | T5.5, T1.5 | No secrets in the bundle |
