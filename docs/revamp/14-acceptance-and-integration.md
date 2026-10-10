@@ -5,6 +5,9 @@ The [foundation audit](../reviews/2026-09-27-foundation-audit.md) remains the ev
 No F01–F40 feature is accepted yet. Nothing here waives the open platform, accuracy or performance
 gates. [12](12-feature-specification.md) controls product scope; [13](13-implementation-guide.md)
 controls task dependencies. This document assigns tests and resolves their integration boundaries.
+The 2026-10-10 adoption of the [engineering review](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
+adds regressions X23–X25 and measurement rules below; findings SV-01–SV-24 and the bounded lab track
+are owned in [16](16-lab-track-and-review-findings.md). Nothing was relaxed.
 
 ## 1. Decisions and scope
 
@@ -19,6 +22,9 @@ controls task dependencies. This document assigns tests and resolves their integ
   permission to publish a release. Local testing and branch/main merges remain the working scope.
 - Browser extension, inventory/publishing, wake word, memory and other platforms remain post-v1.
   They are not missing desktop tasks. The extension's bounded follow-up milestones are in 10.
+- Evidence levels (ADR-0021): a fixture proves a code path; a lab result proves a named corpus/rig/
+  device outcome; only the checks in this document accept a feature. A mock never stands in for
+  hardware, and a lab case study is never presented as the accepted assistant.
 - Planning is complete when requirements have owners, dependency order, tests and failure decisions.
   It cannot guarantee a compositor/API experiment succeeds. A failed gate stops dependent work;
   changes to scope or budgets require the user's decision, not a checkbox tick.
@@ -32,13 +38,13 @@ shortcuts, log into accounts or consume API usage without the relevant explicit 
 
 | Gate | Owner / prerequisites | Pass and failure decision |
 |---|---|---|
-| G-PRESENCE | T0.10; real GNOME Wayland sessions on 24.04 and 26.04, pointer/keyboard access | Prove above/drag/input rectangles, idle non-focus-stealing, Type and approval keyboard focus, closing transient UI, workspace/scaling and restore together. Try managed X11 input hints first, then an owned transient focusable surface visually anchored to the avatar. Both must preserve F02/F06 UX. No reliance on Linux `setFocusable` toggling. If neither passes, stop and propose an ADR; no automatic GNOME extension or dashboard fallback |
+| G-PRESENCE | T0.10; real GNOME Wayland sessions on 24.04 and 26.04, pointer/keyboard access | Prove above/drag/input rectangles, idle non-focus-stealing, Type and approval keyboard focus, closing transient UI, workspace/scaling and restore together. Try managed X11 input hints first, then an owned transient focusable surface visually anchored to the avatar. Both must preserve F02/F06 UX. No reliance on Linux `setFocusable` toggling. If neither passes, stop and propose an ADR; no automatic GNOME extension or dashboard fallback. Before the matrix, the focus bridge follows ADR-0019's desired-state rule (SV-23); a mocked schedule pass is not a desktop pass |
 | G-PLATFORM | T0.10; same sessions, consent for portal dialogs and temporary shortcuts | Complete the matrix in 02 §1.2: screenshot, RemoteDesktop/ScreenCast, AT-SPI, clipboard, cold/warm shortcut, 100/150/200% scaling. Record denied/revoked/missing-service cases as well as success. Repeated portal prompts are supported, not a promise of remembered grants; unavailable focused-app identity denies computer input. Mandatory unavailable behavior blocks its task/release |
 | G-AEC | T0.10 transport/setup, T3.11 acoustic acceptance; speakers and mic consent | Monitor-mode source usable and reversibly installed; then F13's 10-minute zero-self-interruption and stop tests. Duck-and-gate is the already-specified degraded path, never an AEC pass. If speakers still fail, F13 remains unaccepted; ask before changing its promise |
-| G-TIMING | T0.8, then T3.7/T3.8/T3.12 | First rerun the corrected five-sentence spike with measured visible mouth/audio landmarks. Duration extraction alone is not accuracy. Prefer timestamped Kokoro Tier A; if inadequate evaluate existing Tier B/D paths. Tier C would need its own dependency/license ADR and user-approved scope change. Full 30-sentence metric remains a Phase 3 gate |
-| G-BUDGET | T0.10 initial baseline; T2.11/T3.15 final workloads | Record §5 measurements. Optimize within selected Electron/ONNX design; no budget waiver or unmeasured claim. If still failing, stop dependent acceptance and present measured tradeoffs |
+| G-TIMING | T0.8, then T3.7/T3.8/T3.12 | First apply lab V-A.1/V-A.2 (final pose, played-PCM envelope, in-range keys), then rerun the corrected five-sentence spike with measured visible mouth/audio landmarks against output-position time (ADR-0017). Duration extraction alone is not accuracy. Prefer timestamped Kokoro Tier A; if inadequate evaluate existing Tier B/D paths. Tier C would need its own dependency/license ADR and user-approved scope change. Full 30-sentence metric remains a Phase 3 gate |
+| G-BUDGET | T0.10 initial baseline; T2.11/T3.15 final workloads | Record §5 measurements with ADR-0020 frame metrics and the display refresh rate; correct pacing may raise work on high-refresh displays, so re-measure after it lands. Optimize within selected Electron/ONNX design; no budget waiver or unmeasured claim. If still failing, stop dependent acceptance and present measured tradeoffs |
 | G-SUBSCRIPTION | T0.11; locked SDK, user-installed CLI, external user login and consent for minimal test | Prove settings isolation with harmless sentinels, exact tool list, streaming, cancellation, handler enforcement, session continuity, non-secret auth provenance and first-token latency. Unknown CLI/isolation failure → pending, never allow built-ins. Policy/distribution uncertainty blocks subscription release claims; API-key use requires explicit choice. Recheck at each release |
-| G-ASSETS | T0.12; source and redistribution evidence | Commit named CC0 default VRM plus license/source/hash and modification metadata. Gesture assets need redistribution evidence too (T3.9); otherwise create the three simple motions locally. Do not assume a preset/export is automatically CC0 |
+| G-ASSETS | T0.12; source and redistribution evidence | Commit one exact licence-verified default VRM (ADR-0007 order: publisher-designated CC0 first, else a preset under its actual recorded non-CC0 conditions if they permit `.deb`/repository redistribution) plus terms/source/hash/modification metadata and the qualification report. VRoidPreset A–Z are not CC0 (SV-01). Gesture assets need redistribution evidence too (T3.9); otherwise create the three simple motions locally |
 | G-FOUNDATION | T0.13; all T0 tasks and audit corrections | Record passed evidence or explicitly approved design changes for every foundation gate. Containers prove dependency compatibility only, never Wayland. Missing VM/session/account evidence means blocked on that prerequisite; independent read-only planning can proceed, Phase 1 cannot |
 
 Electron's [BrowserWindow reference](https://www.electronjs.org/docs/latest/api/browser-window)
@@ -97,9 +103,19 @@ Stop, and Show is not Talk. No state transition or reconnect may initiate listen
   idle avatar clicks must not be made focus-stealing to satisfy a clipboard test. Return a clear
   instruction when unavailable. Do not paste/capture unrelated clipboard data in tests.
 
+- Operations are owned from intent to final effect (ADR-0019). Avatar selection assigns its
+  generation before fetch; install, status and object URLs publish only while current; candidates
+  are prepared before the previous model is released and disposed exactly once on failure or
+  staleness. Focus is a replaceable desired state with native-hint reconciliation. A native model
+  slot is freed only when the native call returns; submitted work is capped.
+- Performance segments are validated before playback against their PCM frame count (ADR-0017);
+  every key is inside the extent; the player is the single articulation owner (ADR-0018).
+
 Tests: T1.12/T4.0 own generation fencing and complete tool groups (**X09**); T3.8 owns credit,
 stalled playback and progress (**X10**); T1.2 plus each plugin owns live reconfiguration and cleanup
-(**X11**); T4.2 owns revalidation/serialization (**X12**).
+(**X11**); T4.2 owns revalidation/serialization (**X12**). T2.4 owns avatar-operation ownership
+schedules (**X23**); T2.3 owns focus desired-state schedules (**X24**); T1.6/T3.6/T3.8 own segment
+extent/pairing/key-range rejection and native slot ownership under repeated cancel/replace (**X25**).
 
 ### 3.3 Data, configuration and transport edges
 
@@ -216,16 +232,23 @@ performance. NVIDIA is documented best-effort, not an undisclosed v1 acceptance 
 - **Voice:** at least 30 five-second synthetic/licensed utterances through the actual pipeline;
   record per-stage and complete-path timestamps, p50/p95, cold vs warm, network/provider/model,
   and any failure. Verify F10's ≤1 s STT, F12's ≤400 ms ten-word TTS and end-to-end p50 ≤2 s
-  independently. Do not add ceilings and call that a measured latency. Live cloud trials require
+  independently. "First audio" is first audible output (output-position estimate), reported cold
+  and warm separately from total generation and segment gaps. Do not add ceilings and call that a
+  measured latency. Live cloud trials require
   consent; offline fake results are not cloud latency evidence.
-- **Animation:** record actual presented frames and frame intervals while speaking at scale 1;
-  verify sustained 60 fps and <1 ms player updates, including expressions and closure dominance.
-  Report drops rather than hiding them in an average. Hidden = no animation frames.
+- **Animation:** record the display refresh rate, callback availability, rendered frames, target
+  deficit, frame work time and visibility over a stated window (ADR-0020) while speaking at scale 1;
+  verify sustained 60 fps with zero deficit on a ≥60 Hz display and <1 ms player updates, including
+  expressions and closure dominance. A dropped-frame estimate is not evidence of meeting the target.
+  Include a high-refresh display if one is in scope; report rather than hide deficits.
+  Hidden = no animation frames.
 - **Lip sync:** pin 30 synthesis texts, voice/model/speed, PCM fixture hashes and independently
   annotated /p b m/ intervals (human-reviewed audio landmarks, not `pred_dur` compared with itself).
   Assert every closure ≥40 ms at weight ≥0.9 within ±40 ms. Calibrate visual capture/audio offset
   and record a close-up to establish <45 ms mouth/audio offset; insufficient capture precision
   means unverified. Basic VRM must visibly close too; an internal channel value alone is insufficient.
+  Distinguish graph, output-position and display time; record the output device and whether
+  `getOutputTimestamp` or the graph-time fallback was used (ADR-0017). Record unknown-phone counts.
 - **Interruptions:** time from speech onset/key press to actual audio silence, not just cancel
   enqueue. Verify F13's ≤350 ms onset-to-silence and F27's ≤300 ms key-to-silence, no later calls,
   and no stale segment after immediate new input. Ten-minute AEC trial uses laptop speakers.
@@ -236,7 +259,9 @@ baseline, not retroactively relabeling old evidence.
 
 ## 6. Executable sequence and release gates
 
-1. Finish reopened T0.8/T0.10 evidence, then T0.11 and T0.12, then T0.13 foundation review.
+1. Finish reopened T0.8/T0.10 evidence, then T0.11 and T0.12, then T0.13 foundation review. In
+   parallel, the bounded lab track in 16 may close contract findings (V-A, V-B, V-E) on spike and
+   pure package code; it never advances a product gate on its own.
 2. Phase 1 task DAG → **T1.14** headless integration; Phase 2 → **T2.11** text-desktop integration.
 3. Phase 3 → **T3.15** voice integration; then T4.1/T4.2/**T4.0** integrate the tool loop before
    desktop tool handlers. Finish read tools, approvals, Stop, subscription tools and boundaries.

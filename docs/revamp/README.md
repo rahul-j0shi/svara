@@ -4,7 +4,8 @@ This folder is the complete plan for rebuilding this repository into a **desktop
 plugin-first AI assistant with an animated 3D avatar** that lives on your screen.
 
 The previous code (`main.py`, `talking-head/`, `backend/`, `frontend/`) was a learning prototype. It
-is kept in git history (tag `v0-prototype`) and was removed from `main` in Phase 0. Nothing in it is
+is kept in git history at merge commit `2389194` and was removed from `main` in Phase 0. The planned
+`v0-prototype` tag has not been pushed to the remote yet (awaiting approval, 16 §7). Nothing in it is
 carried forward except the idea of provider adapters.
 
 ## Project identity
@@ -51,6 +52,7 @@ later drive a browser extension; that is planned for, not built.
 | 13 | [Implementation guide & backlog](13-implementation-guide.md) | Verified toolchain and dependencies, repo bootstrap, conventions, ADR index, config key reference, protocol payloads, the ordered task backlog |
 | 14 | [Acceptance & integration](14-acceptance-and-integration.md) | Every AC's owner/test ID, cross-feature contracts, remaining experiment gates and measurement methods |
 | 15 | [Developer handoff — start here](15-developer-handoff.md) | Exact current standing, reproducible commands, first work package, module/test locations and completion template |
+| 16 | [Lab track & review findings](16-lab-track-and-review-findings.md) | Fixture/lab/product evidence levels, the bounded speech/avatar lab work units and frozen corpus, owners for review findings SV-01–SV-24, items only the user can unblock |
 
 ## Design principles
 
@@ -64,14 +66,18 @@ later drive a browser extension; that is planned for, not built.
 3. **Streaming end to end.** Nothing waits for a whole response. Tokens stream into sentences, which
    stream into audio and viseme tracks.
 4. **One clock for audio and face.** Audio playback, visemes and expressions are scheduled on the same
-   `AudioContext` clock in the renderer. Lip sync is part of the core pipeline, not a UI effect.
+   `AudioContext` clock in the renderer; the face samples the estimated *output* position, because
+   graph time can lead what is heard (ADR-0017). Each segment's PCM frame count is its authority.
+   Lip sync is part of the core pipeline, not a UI effect.
 5. **Safe by default.** Read-only permissions by default. Every write or exec action goes through a
    policy check, and an approval if the policy says so. Everything is audited.
 6. **No over-engineering.** One Python process, one desktop shell, SQLite, JSON config files. No
    microservices, no server, no accounts, no DI framework beyond the ~300-line kernel, no LangGraph,
    and only one small frontend store fed by protocol messages (02 §1.5).
-7. **Portfolio quality.** Typed code, tests that prove the hard parts (kernel revertibility, permission
-   engine, viseme timing), CI, measured latency, a clear README with a demo video, and ADRs.
+7. **Portfolio quality through evidence.** Typed code, tests that prove the hard parts (kernel
+   revertibility, permission engine, final mouth pose, operation ownership), CI, measured latency, a
+   clear README with a demo video, and ADRs. Fixture, lab and product evidence are reported
+   separately (ADR-0021); planned guarantees are never presented as implemented.
 
 ## Key decisions at a glance
 
@@ -81,9 +87,9 @@ later drive a browser extension; that is planned for, not built.
 | Parallelism | asyncio for I/O; native inference in a thread pool (native code releases the GIL). Free-threaded `3.14t` stays an opt-in experiment | "use new Python for multithreading" |
 | Platform | **Ubuntu 24.04 LTS and 26.04 LTS only** (GNOME, default Wayland session; the avatar window runs through XWayland; portals for screenshots/input). Other OSes post-v1 | — |
 | Desktop shell | **Electron 44 + React + TypeScript + Vite**, selected by the measured Phase 0 comparison in ADR-0006 | Streamlit, then vanilla HTML |
-| Language | Language-agnostic: replies in the user's input language; lip sync via IPA phonemes works for any language espeak-ng covers; developed and tested in English | Hinglish-only prompt |
+| Language | Replies in the user's input language; lip sync is IPA-based, but only qualified language × voice × rig rows are claimed (English + pinned Kokoro voice + default rig in v1); other espeak-ng languages are best-effort | Hinglish-only prompt |
 | 3D | **three.js + @pixiv/three-vrm**, **VRM 1.0** avatars | Ready Player Me (shut down 31 Jan 2026) + Babylon.js |
-| Lip sync | In-house performance engine: phonemes + timings → 15-viseme track + amplitude envelope → per-avatar retarget map | TalkingHead library |
+| Lip sync | In-house performance engine: declared phones + timings → 15 canonical visemes + played-PCM intensity envelope → one articulation owner (player) → linear per-avatar retarget; kept where the lab shows benefit over one reused baseline (ADR-0017/0018/0021) | TalkingHead library |
 | Default TTS | **Kokoro-82M** through our own onnxruntime runner on the timestamped ONNX export (local, Apache-2.0, phoneme timings); espeak-ng subprocess for pronunciation (G2P); nothing GPL in-process. Cloud: ElevenLabs, OpenAI, Azure | MiniMax / Coqui |
 | Default STT | Mic captured by the core through **PipeWire** (with its WebRTC echo cancellation) + **faster-whisper** (local) + **Silero VAD**. Cloud: Deepgram, Google Cloud STT v2, OpenAI | Whisper API with a volume threshold |
 | LLM | **Claude via your subscription** (default when a logged-in Claude Code is present, through the official Agent SDK, 05 §3) · Claude via Anthropic API key · OpenAI-compatible (OpenAI, OpenRouter, Ollama, LM Studio, DeepSeek…) · Gemini. Two ports: `ChatModel` and `AgentBackend` | MiniMax / OpenAI hard-coded |
@@ -100,7 +106,8 @@ later drive a browser extension; that is planned for, not built.
 - **Language:** no language-specific work. The assistant replies in the user's language. See 03 §4.6.
 - **Claude:** your subscription first (through the official Agent SDK, using the Claude Code login you
   do yourself), the Anthropic API key second and used for public demos. See 05 §3.
-- **Default avatar:** a CC0 VRoid preset VRM. See 03 §1.
+- **Default avatar:** one exact, licence-verified, qualified free VRM chosen in T0.12 (publisher-
+  designated CC0 first). VRoid presets are not CC0 (corrected 2026-10-10). See 03 §1 and ADR-0007.
 - **Planning style:** no dates or durations. Sequence, scope and exit criteria only. See 09.
 - **Extension identity:** the future extension pairs with the desktop app using a one-time code, not
   a Claude login. See 10 §3.
@@ -114,6 +121,12 @@ later drive a browser extension; that is planned for, not built.
   volume/quit/uninstall recovery matrix is in 02 §3.1.
 
 ## Planning complete; implementation gates remain
+
+**2026-10-10:** the five-round engineering review is adopted (ADR-0017–0021, [16](16-lab-track-and-review-findings.md)).
+It corrects the avatar licence claim, fixes the performance and ownership contracts, and adds a
+bounded lab track that may proceed while Phase 0 platform gates wait for Wayland environments. No
+code finding is fixed yet; the next lab unit is V-A.1.
+
 
 Paused at T0.10 for the [foundation audit](../reviews/2026-09-27-foundation-audit.md). Open gates:
 Wayland on both releases, idle-focus/typing behavior, visible lip-sync accuracy and resource budgets.

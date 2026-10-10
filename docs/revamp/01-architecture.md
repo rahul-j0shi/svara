@@ -77,8 +77,11 @@ Your requirements are literally temporal and spatial composability:
 We **do not** adopt DeepSeek Harness (it is a Node.js agent harness, a developer preview with
 announced breaking changes). We **do not** depend on the community Python port `cordis-py` (single
 maintainer, and it documents several deviations from the paper). We write a **mini kernel of about
-300 lines** with the same semantics, fully unit-tested. It is also one of the best things in the repo
-to show an interviewer.
+300 lines** with the same semantics, fully unit-tested. It is justified by the live toggle,
+provider-swap and teardown requirements above, not by portfolio appeal; it earns its place when a
+provider can be replaced or unmounted during active work without stale audio, listeners, approvals
+or callbacks (T1.1, engineering review SV-12). Per-boundary operation ownership (ADR-0019) is
+implemented where it is needed, not by growing the kernel.
 
 ```python
 # core/src/svara_core/kernel/ (sketch, not final code)
@@ -306,8 +309,8 @@ in any Python version.
 - Python 3.14 (Oct 2025) made the **free-threaded build officially supported** (PEP 779), but it is
   **not the default build**. It ships as a separate interpreter (`python3.14t`). Any C extension that
   hasn't opted in silently re-enables the GIL. The heavy parts of this app (onnxruntime,
-  CTranslate2/faster-whisper, torch) are native code that already releases the GIL while it computes,
-  so free-threading gains us little today.
+  CTranslate2/faster-whisper) are native code that already releases the GIL while it computes, so
+  free-threading gains us little today. (PyTorch is excluded from v1.)
 - **Decision:** standard CPython 3.14 via `uv`. In Phase 0 we check that every native dependency has
   cp314 wheels. If one doesn't, we pin 3.13 and note it in an ADR. Python 3.15 is due in Oct 2026, and
   we upgrade when our dependencies do. Free-threaded `3.14t` is an optional CI job (a "nice to have"
@@ -320,8 +323,13 @@ in any Python version.
   - CPU-bound inference (Whisper, Kokoro, Silero, G2P) runs in a dedicated `ThreadPoolExecutor`
     through `loop.run_in_executor`, with at most one job per model so they don't thrash.
     **Caveat:** cancelling a turn cannot stop a thread that is already running inference. The job
-    finishes and its result is discarded. We keep jobs short (one sentence or one utterance) so a
-    cancelled job wastes at most a few hundred ms.
+    finishes and its result is discarded by the turn-generation fence. Jobs are one sentence or one
+    utterance, but measured Kokoro sentences take 0.6–2.2 s on the dev machine, so a cancelled job
+    is **not** cheap (SV-05). Therefore (ADR-0019): the model's slot stays owned until the native call
+    returns; submitted work (not only active work) is capped so a new turn never waits behind a pile
+    of obsolete inference; and repeated cancel/replace histories are tested. Per-run ONNX Runtime
+    termination (`RunOptions.terminate`, a fresh options object per job) is an optional experiment if
+    bounded completion misses an existing latency target; it never replaces fencing.
   - Plugins' background work uses `ctx.spawn()`, so it is cancelled on unmount.
 
 ## 6. Repository layout (target)

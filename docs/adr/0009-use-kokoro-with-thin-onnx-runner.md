@@ -9,8 +9,12 @@ GPL-linked dependency stacks into the process. The selected model path is docume
 Decision:
 - Run the timestamp-capable Kokoro-82M ONNX export directly with `onnxruntime`.
 - Maintain a thin in-house runner for tokenization, inference, duration extraction, and PCM output.
-- Invoke the system `espeak-ng` executable as a subprocess for IPA/G2P; do not import or link GPL
-  phonemizer code into Svara.
+- Invoke the system `espeak-ng` executable as a subprocess for IPA/G2P with a fixed configuration
+  argv and the exact text on stdin (`--stdin`); do not import or link GPL phonemizer code into Svara.
+- Declare the pinned tokenizer's inventory; every symbol is mapped or explicitly unsupported and
+  unknowns are counted, never silently mapped to silence (ADR-0018).
+- Treat the authoritative PCM frame count as the segment extent (ADR-0017) and hold the model's
+  executor slot until native inference returns (ADR-0019).
 - Pin the model revision and SHA-256 and download the model and voices on first use.
 - Keep cloud and alternative local voices behind the same TTS adapter contract.
 
@@ -29,3 +33,8 @@ Evidence:
 - T0.8 also verified real WebAudio/VRM playback from the generated 24 kHz waveform, 10 ms envelope,
   and 15-viseme track without loading GPL code into Python.
 - T0.9 verifies the locked ONNX runtime and model smoke call on Python 3.14.
+- 2026-10-10: the engineering review found the spike passes text in eSpeak's option position
+  (SV-24), maps unknown native symbols to `sil` (SV-09) and peak-normalizes the envelope per sentence
+  (SV-14). These are recorded, unfixed spike findings owned by lab units V-A.2/V-A.3 and product
+  tasks T3.6/T3.7. Wrappers that exclude Python 3.14, add PyTorch or add a local service
+  (`kokoro-onnx`, Pipecat Kokoro, Pocket TTS) remain non-drop-ins under this decision.

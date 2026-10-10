@@ -14,6 +14,13 @@ evidence remains open in [the spike report](../spikes/T0.10-ubuntu-integration.m
 The planning review is recorded in [14](14-acceptance-and-integration.md). Close corrections and
 open gates before T0.11. A checkpoint merge is not a passed acceptance test.
 
+**2026-10-10:** the [engineering review, rounds 1–5](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
+is adopted through ADR-0017–0021 and [16](16-lab-track-and-review-findings.md). The product task graph
+below is unchanged in order and dependencies; affected "Done when" cells now carry the review's
+regressions. A separate, bounded **lab track** (16 §3, work units `V-…`) may proceed while Phase 0
+platform gates are blocked, because it touches only spike and pure package code. A lab result never
+marks a task, gate or AC passed (ADR-0021).
+
 1. Pick the next task in §8 whose dependencies and phase gates are done. The scheduled pull-forwards
    below are intentional; numeric phase labels are not a substitute for the dependency graph.
 2. **Definition of Ready:** the task's features exist in 12 with ACs, open design points are
@@ -29,6 +36,9 @@ open gates before T0.11. A checkpoint merge is not a passed acceptance test.
      the next task from the updated `main`. Do not deploy or publish a release without approval.
 5. If a spike or task shows the plan is wrong: write or update an ADR, change 12 if scope changes,
    then continue.
+6. Report status as **work unit/task → finding IDs → commit or experiment inputs → actual result →
+   remaining limitation**, keeping fixed code, decided contract, qualified asset, measured device and
+   accepted release distinct (16 §8).
 
 ---
 
@@ -186,7 +196,7 @@ T0.4, and the rest by the spikes.
 | 0004 | In-house plugin kernel with Cordis semantics (01 §2) | Accepted |
 | 0005 | Python 3.14 standard build, asyncio, executor for inference (01 §5) | Accepted |
 | 0006 | Shell: Electron, selected by the Tauri/Electron measurements | Accepted |
-| 0007 | VRM 1.0 + three.js/three-vrm; CC0 VRoid preset default (03 §1) | Accepted |
+| 0007 | VRM 1.0 + three.js/three-vrm; one exact licence-verified, qualified default (03 §1) | Accepted (amended: not assumed CC0) |
 | 0008 | Performance engine: IPA → 15 visemes, timing tiers, keyframes + envelope (03) | Accepted |
 | 0009 | Kokoro own runner on the timestamped ONNX; espeak-ng subprocess; no in-process GPL (03 §4.7–4.8) | Accepted design; duration extraction confirmed, visual accuracy open |
 | 0010 | Mic in the core via `pw-record`; PipeWire echo-cancel in monitor mode (02 §1.4) | Accepted design; topology observed, acoustic effectiveness open |
@@ -196,6 +206,11 @@ T0.4, and the rest by the spikes.
 | 0014 | JSONC config + pydantic schemas + live reload via plugin-tree diff (08) | Accepted |
 | 0015 | SQLite append-only event log (08 §4) | Accepted |
 | 0016 | `.deb` only, no Snap/Flatpak/auto-update (12 F38) | Accepted |
+| 0017 | PCM frame count is the segment authority; in-range keys; envelope from played PCM; output clock (03 §3, §5) | Accepted |
+| 0018 | One articulation owner (player); declared phone inventories; literal G2P stdin (03 §4) | Accepted |
+| 0019 | Own async operations by intent: avatar loads, focus desired state, native job slots (01 §5) | Accepted |
+| 0020 | Phase-preserving frame pacing and honest deficit metrics (12 F02) | Accepted |
+| 0021 | Bounded lab track; fixture / lab / product acceptance levels (16) | Accepted |
 
 **Template**
 
@@ -340,7 +355,7 @@ reply carries `id`, and the reply echoes it. Every field is required unless mark
 | `transcript` | `turnId`, `text`, `final: bool` | turn |
 | `assistant.delta` | `turnId`, `text` (already cleaned of tags) | turn |
 | `assistant.done` | `turnId`, `stopReason: "end"\|"max_steps"\|"cancelled"\|"refusal"\|"error"\|"timeout"`, `usage?: {inputTokens, outputTokens}` | turn |
-| `performance.segment` | `turnId`, `segmentId`, `streamId`, `sampleRate`, `durationMs`, `text`, `visemes: [tMs, viseme, weight][]`, `envelope` (base64 u8 @100 Hz), `cues: {tMs, kind, name, intensity, durationMs?}[]`, `wordSpans: [startMs, endMs, charStart, charEnd][]` | turn (avatar only) |
+| `performance.segment` | `turnId`, `segmentId`, `streamId`, `sampleRate`, `frameCount` (authoritative), `durationMs` (derived = frameCount/sampleRate×1000, informational), `text`, `visemes: [tMs, viseme, weight][]`, `envelope` (base64 u8 @100 Hz, articulation intensity from the played PCM), `cues: {tMs, kind, name, intensity, durationMs?}[]`, `wordSpans: [startMs, endMs, charStart, charEnd][]`, `timingTier`, `unknownPhones` (count) | turn (avatar only) |
 | `performance.stop` | `turnId` | turn (avatar only) |
 | `tool.activity` | `turnId`, `callId`, `name`, `phase: "start"\|"end"`, `ok?`, `summary` (≤ 80 chars) | turn |
 | `tool.call` | `callId`, `name`, `args` | (the registering surface) |
@@ -422,14 +437,22 @@ imports use their feature/manifest limits; settings archives use 14 §3.3 limits
 create a transfer without a native selection/save action. T1.6 defines this contract; T3.1/T6.2/T6.4
 implement their operation-specific validation.
 
-Audio rules: PCM s16le mono; segment `sampleRate` is a positive supported adapter rate; metadata
-duration must match PCM sample count within one sample. Monotonic sequence numbers start at 0;
+Audio rules (ADR-0017): PCM s16le mono, byte-aligned; segment `sampleRate` is a positive supported
+adapter rate; the assembled PCM must contain exactly `frameCount` frames, and `durationMs` is never
+used to validate PCM. Both core (adapter boundary) and renderer (before scheduling, after any
+`decodeAudioData` resampling, compared at the matching rate) reject a segment whose frames, rate,
+envelope coverage (`ceil(extent/10 ms)` values) or key ranges disagree; a rejected segment starts no
+source, changes no accepted state, and is reported as `playback.progress` `discarded` with an error.
+The envelope is computed from the played PCM with a per-voice calibrated range; all-zero PCM gives
+an all-zero envelope. Monotonic sequence numbers start at 0;
 unknown stream/kind, duplicate/out-of-order frames or frames after end are rejected. Bound each
 assembled segment to 120 s / 12 MB and total queued audio to the current segment plus two ahead;
 an over-limit synthesis becomes text-only with an error. Binary end markers carry no PCM. Time
-values are finite, monotonic, within duration; weights 0–1; character spans index Unicode code
+values are finite, monotonic, within the frame-derived extent (the generator clamps release tails
+to it; there is no cross-segment key format in v1); weights 0–1; character spans index Unicode code
 points (not JS UTF-16 units), start inclusive/end exclusive. `wordSpans` includes end time so
-"last fully spoken word" is computable. Progress is relative audio-clock time, never wall clock.
+"last fully spoken word" is computable. Progress is relative audio time at the output-position
+estimate (graph time only as a recorded fallback), never wall clock.
 
 Protocol 1 accepts only version 1 (there is no deployed version 0). First-message hello deadline
 5 s; no authentication = close. Rate/size errors close abusive connections. Snapshots are topic-
@@ -454,19 +477,19 @@ T4.10 preview candidate → remaining Phase 4 → 5 → 6 → 7. A task retains 
 
 | ID | Task | Implements | Depends on | Done when |
 |----|------|-----------|------------|-----------|
-| T0.1 | Tag `v0-prototype`; delete the legacy files (09 Phase 0 list) | 09 | — | `main` holds only `docs/`, LICENSE, README stub |
+| T0.1 | Tag `v0-prototype`; delete the legacy files (09 Phase 0 list) | 09 | — | `main` holds only `docs/`, LICENSE, README stub; `v0-prototype` → `2389194` exists on the remote (deletion done; tag never pushed — awaiting user approval, 16 §7) |
 | T0.2 | Create the repo skeleton (§3), Git LFS for `*.vrm *.vrma` | §3 | T0.1 | The tree exists; `setup` runs on 24.04 |
 | T0.3 | Lint/test tooling, root commands, CI (§3) | §3, §4 | T0.2 | CI green on an empty test in both jobs |
 | T0.4 | Write ADR-0001–0016 (0006 as Proposed) | §5 | T0.2 | 16 files in `docs/adr/` |
 | T0.5 | Spike A-Tauri: transparent XWayland window + VRM + drag + input region + WebAudio | 02 §1.2–1.3 | T0.2 | Measurements recorded against the 02 §1.3 criteria |
 | T0.6 | Spike A-Electron: the same page, same checks | 02 §1.3 | T0.2 | Measurements recorded |
 | T0.7 | Decide the shell; ADR-0006 Accepted; delete the losing spike | 02 §1.3 | T0.5, T0.6 | ADR merged |
-| T0.8 | Spike B: minimal Kokoro runner (timestamped ONNX, espeak-ng IPA → tokens → `pred_dur`) + hand-built viseme track on the VRM | 03 §4.8 | T0.6 | Corrected five-sentence visual rerun and G-TIMING evidence, not arithmetic onset alone |
+| T0.8 | Spike B: minimal Kokoro runner (timestamped ONNX, espeak-ng IPA → tokens → `pred_dur`) + hand-built viseme track on the VRM | 03 §4.8 | T0.6 | Corrected five-sentence visual rerun and G-TIMING evidence, not arithmetic onset alone; rerun after lab V-A.1/V-A.2 so it measures the corrected final pose and played-PCM envelope |
 | T0.9 | Spike C: locked deps install + smoke calls on 3.14 | §2 | T0.3 | All imports and smoke calls pass on 24.04 and in the 26.04 container |
-| T0.10 | Spike D: Ubuntu integration checks (02 §1.2 "to verify" + PipeWire echo-cancel monitor mode + focus hint) | 02 §1.2, §1.4 | T0.7 | G-PRESENCE/G-PLATFORM/G-AEC transport/G-BUDGET evidence per 14 §2; unavailable test is blocked, not pass |
+| T0.10 | Spike D: Ubuntu integration checks (02 §1.2 "to verify" + PipeWire echo-cancel monitor mode + focus hint) | 02 §1.2, §1.4 | T0.7 | G-PRESENCE/G-PLATFORM/G-AEC transport/G-BUDGET evidence per 14 §2; unavailable test is blocked, not pass; focus bridge uses the desired-state rule (V-E.1) before its Wayland matrix; frame evidence uses ADR-0020 metrics with refresh rate recorded |
 | T0.11 | Spike E: Claude subscription bridge checks (09 Phase 0) | 05 §3.2 | T0.9 | ADR-0011 evidence; gate outcome recorded |
-| T0.12 | Default avatar: export the CC0 VRoid preset as VRM 1.0; `assets/LICENSES.md` | 03 §1, F14 AC3 | T0.2 | File committed via LFS; licence recorded |
-| T0.13 | Foundation exit review and reproducible handoff | 14 §2 | T0.1, T0.2, T0.3, T0.4, T0.5, T0.6, T0.7, T0.8, T0.9, T0.10, T0.11, T0.12 | Open audit gates closed by evidence or explicit approved design change; local checks and both CI jobs pass |
+| T0.12 | Default avatar: select one exact licence-verified free VRM (ADR-0007 order), export/obtain as VRM 1.0, qualify it; `assets/LICENSES.md` | 03 §1, F14 AC3 | T0.2 | File committed via LFS; actual terms, source, hash, modifications recorded; qualification report (V-B.1) committed with profile choice and known limits |
+| T0.13 | Foundation exit review and reproducible handoff | 14 §2 | T0.1, T0.2, T0.3, T0.4, T0.5, T0.6, T0.7, T0.8, T0.9, T0.10, T0.11, T0.12 | Open audit gates closed by evidence or explicit approved design change; every SV finding in 16 §5 has a status; local checks and both CI jobs pass |
 
 ### Phase 1 — Kernel, protocol, text brain
 
@@ -477,7 +500,7 @@ T4.10 preview candidate → remaining Phase 4 → 5 → 6 → 7. A task retains 
 | T1.3 | Storage: SQLite event log, async writer, `user_version` migrations | F32 (AC1) | T1.1 | WAL crash test passes |
 | T1.4 | Secrets plugin (keyring), `{secret}` resolution | F31 (AC1, AC3; AC2 service fixture) | T1.2 | Service fixtures pass; WS secret-leak AC integrates at T1.14 |
 | T1.5 | Logging + redaction filter | F36 (logs), F34 (AC2) | T0.13 | Redaction test passes |
-| T1.6 | Protocol: messages (§7), server (token, Origin, topics, snapshot, rate limit, `/assets`), TS generation + drift check | F40 (AC1–3) | T1.1, T1.2 | ACs pass with a test WS client |
+| T1.6 | Protocol: messages (§7), server (token, Origin, topics, snapshot, rate limit, `/assets`), TS generation + drift check | F40 (AC1–3) | T1.1, T1.2 | ACs pass with a test WS client; segment schema has `frameCount` and rejects fractional-ms mismatch, truncated PCM and out-of-range keys (ADR-0017) |
 | T1.7 | Prompt assembly (sections as effects) + persona plugin + built-in rules | F22 (AC1–2), 07 §4 | T1.2 | Prompt snapshot tests |
 | T1.8 | `ChatModel` port, normalised messages, shared contract suite, `fake` adapter | F19 (AC1 harness), F37 | T1.1 | The suite runs green on `fake` |
 | T1.9 | `anthropic` adapter with every 05 §2a rule | F19 (AC1) | T1.8, T1.4 | Contract suite + append-only check (F21 AC3) |
@@ -496,15 +519,15 @@ tests pass.
 |----|------|-----------|------------|-----------|
 | T2.1 | Shell lifecycle, single instance, CLI action dispatch/cold settings updates, autostart, crash recovery, cleanup | F01 AC1/3/4/5/7; Talk dispatch harness | T1.14 | Lifecycle ACs pass; real Talk AC2/6 deferred explicitly to T3.15 |
 | T2.2 | Frontend core-client (typed WS, reconnect, binary frames) + store | F40 client side | T1.14 | Reconnect test with a killed core |
-| T2.3 | Production window geometry/input/focus/hide/restore and avatar-only entry point; no spike UI | F02 AC1–5/7/8; CPU integration later | T2.1, T2.2 | Isolated geometry/focus/screenshot tests pass; renderer integrated at T2.11 |
-| T2.4 | `packages/avatar`: VRM + VRMA load via `/assets`, framing, `avatar.json` apply in place | F14 (AC1 load path) | T1.14, T0.12 | Standalone package harness passes; no dependency on production window; colour update ≤1 s |
-| T2.5 | Idle behaviour | F17 | T2.4 | CPU limit met; blink distribution test |
+| T2.3 | Production window geometry/input/focus/hide/restore and avatar-only entry point; no spike UI | F02 AC1–5/7/8; CPU integration later | T2.1, T2.2 | Isolated geometry/focus/screenshot tests pass; focus desired-state schedules (open→close before/during/after helper, toggles, failure, disposal, bad sender) pass (ADR-0019); renderer integrated at T2.11 |
+| T2.4 | `packages/avatar`: VRM + VRMA load via `/assets`, framing, `avatar.json` apply in place | F14 (AC1 load path) | T1.14, T0.12 | Standalone package harness passes; no dependency on production window; colour update ≤1 s; selection-intent ownership and prepare/commit/rollback schedules pass (SV-18–20, ADR-0019); existing in-loader and disposal fences kept |
+| T2.5 | Idle behaviour | F17 | T2.4 | CPU limit met; blink distribution test; phase-preserving limiter and deficit metrics pass virtual 50–240 Hz schedules (ADR-0020) |
 | T2.6 | State visuals (booting, idle, thinking, error) | F04 (AC1 partial) | T2.4 | Visual within 100 ms |
 | T2.7 | Native menu/tray, checked config state, hide/restore/Quit; Show/Hide shortcut | F03 text-ready subset, F02 | T2.3 | Text/recovery checks pass; voice actions pending with explanation until T3.15; Stop integration at T4.15 |
 | T2.8 | Bubble (cleaned text/tag stripping, truncation, auto-hide, placement) + type box | F05 (AC1, AC3), F06 (AC1–3) | T2.3, T2.9 | ACs pass; share pure tag parser with later T3.5, not a second parser |
 | T2.9 | Conversations window | F07 (AC1–4) | T2.2 | ACs pass |
 | T2.10 | Configure shell + Models & accounts, Persona and Shortcuts (Show/Hide now) sections; comment-preserving edits; stale-write rejection | F08 (AC1–3, those sections), F19 UI | T2.2, T2.7 | ACs pass; Show/Hide shortcut can be added/removed |
-| T2.11 | Text desktop integration and phase exit | F01–F08 text portions, F14/F17; X18/X20 | T2.5, T2.6, T2.7, T2.8, T2.9, T2.10 | Actual avatar-only build, idle budget, all text controls, focus/drag/workspace and crash/reconnect pass locally |
+| T2.11 | Text desktop integration and phase exit | F01–F08 text portions, F14/F17; X18/X20 | T2.5, T2.6, T2.7, T2.8, T2.9, T2.10 | Actual avatar-only build, idle budget (with refresh rate and deficit recorded), all text controls, focus/drag/workspace and crash/reconnect pass locally |
 
 ### Phase 3 — Voice + performance
 
@@ -515,14 +538,14 @@ tests pass.
 | T3.3 | Silero VAD (ONNX wrapper) + the listening flow (start/stop rules, 8 s timeout, 60 s cap) | F09 (AC2, AC4), F04 (AC2) | T3.2, T3.1 | ACs pass |
 | T3.4 | STT port + `faster_whisper` + `deepgram` + contract suite + noise filter | F10 (AC1–3) | T3.3 | ACs pass |
 | T3.5 | Segmenter: sentence rules, first-sentence rule, normalisation, shared tag extraction, reasoning/code skipping | F12 (AC3), F16 (AC2), 04 §2 | T2.11 | Unit tests |
-| T3.6 | TTS port + `kokoro` runner + `elevenlabs` + contract suite (incl. alignment tier) | F12 (AC1) | T3.1, T0.8 | ACs pass |
-| T3.7 | Performance engine: espeak G2P, IPA→viseme table, tiers A/B/D, shape rules, envelope | F15 (AC1) | T3.5, T3.6 | Independently annotated bilabial test passes |
-| T3.8 | `PerformancePlayer` + retarget maps + gapless scheduling on one AudioContext + autoplay unlock | F15 (AC2–3), F12 (AC2) | T3.7, T2.4 | ACs pass |
+| T3.6 | TTS port + `kokoro` runner + `elevenlabs` + contract suite (incl. alignment tier) | F12 (AC1) | T3.1, T0.8 | ACs pass; contract suite checks literal stdin G2P (`--help`/leading-dash text), declared inventory with no silent `sil`, frame-count extent, and model-slot ownership through native exit under repeated cancel/replace (ADR-0017/0018/0019) |
+| T3.7 | Performance engine: espeak G2P, IPA→viseme table, tiers A/B/D, shape rules, envelope | F15 (AC1) | T3.5, T3.6 | Independently annotated bilabial test passes; generator owns timing only, keys stay in extent, envelope from played PCM with per-voice calibration, unknown phones counted (ADR-0017/0018) |
+| T3.8 | `PerformancePlayer` + retarget maps + gapless scheduling on one AudioContext + autoplay unlock | F15 (AC2–3), F12 (AC2) | T3.7, T2.4 | ACs pass; player is the single articulation owner and final rig-weight regressions (PP/FF→vowel, short closure, overlap, end) pass; mismatched segments rejected before playback; output-clock sampling with recorded fallback (ADR-0017/0018) |
 | T3.9 | Expressions & gestures + sentiment fallback | F16 (AC1–3) | T3.8 | ACs pass |
 | T3.10 | Response modes + bubble speech sync + pause voice + live output volume; minimal Voice controls and preview | F11, F12, F05 (AC2) | T3.8, T3.9 | ACs pass; usable Voice settings now, final polish at T6.1 |
 | T3.11 | Barge-in + PipeWire echo-cancel setup/remove UI + duck-and-gate fallback | F13 (AC1–3) | T3.3, T3.10 | ACs pass with speakers |
-| T3.12 | Lip-sync lab + golden export/load | F18 | T3.8 | A lab export passes as a golden |
-| T3.13 | Latency metrics + overlay | F36 (overlay) | T3.8 | p50/p95 shown; 04 §5 targets measured and recorded |
+| T3.12 | Lip-sync lab + golden export/load | F18 | T3.8 | A lab export passes as a golden; reviewed landmark annotations and graph/output clock shown; lab-track corpus and evidence (16 §4) imported, not re-invented |
+| T3.13 | Latency metrics + overlay | F36 (overlay) | T3.8 | p50/p95 shown; 04 §5 targets measured and recorded as first audible output (cold/warm), total generation and gaps separately; a miss goes to the user with measured options |
 | T3.14 | `--demo` voice path (fake STT/TTS with Tier A timings) | F37 (AC1–2) | T3.8 | CI demo turn includes a performance |
 | T3.15 | Voice integration/phase exit; Talk shortcut; first-use/download/offline UX | F01 AC2/6, F03/F04 voice, F09/F13/F20/F33/F40; X01/X02/X04/X07 | T3.4, T3.9, T3.10, T3.11, T3.12, T3.13, T3.14 | Real complete spoken turn, modes, interruption, model lifecycle, local latency and mic privacy pass; fixtures are not an acoustic pass |
 

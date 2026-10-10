@@ -18,7 +18,9 @@ Decision:
 Consequences:
 - Cancellation and ownership are explicit, and a turn cannot leave orphaned async tasks.
 - Cancelling Python cannot stop native work already executing in a thread; results from a cancelled
-  turn are discarded, and inference units must remain short.
+  turn are discarded. Measured Kokoro sentences take 0.6–2.2 s, so wasted work is not "a few hundred
+  ms": the model's slot stays owned until the native call returns, submitted work is capped, and
+  per-run termination is only an optional experiment (ADR-0019, amended 2026-10-10 after SV-05).
 - Native dependencies must publish CPython 3.14 wheels before they enter the locked environment.
 - Free-threading can be evaluated as an optional experiment without becoming a production
   requirement.
@@ -30,3 +32,5 @@ Evidence:
   all imports plus real ONNX Runtime, CTranslate2, PyAV, and dbus-fast calls on uv-managed standard
   CPython 3.14.7 under Ubuntu 24.04 and a clean Ubuntu 26.04 container. No Python 3.13 fallback is
   required.
+- 2026-10-10: the engineering review (SV-05, SV-12) keeps this model and asks for executable proof
+  of fences, credit and slot ownership under repeated cancel/replace (lab V-C.1, product T3.6/T3.15).

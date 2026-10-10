@@ -45,7 +45,9 @@ typed text ─►│                    └──────► text deltas ─
   - URLs, file paths and code are replaced in speech with short phrases ("a link", "the file
     report.pdf").
 - **TTS:** at most 2 sentences are synthesised ahead of playback (bounded queue), so we don't waste
-  money on text that gets interrupted.
+  money on text that gets interrupted. The bound covers submitted native work too: a cancelled
+  sentence keeps its model slot until inference returns, and its output is dropped by the generation
+  fence (ADR-0019). Each synthesised segment's PCM frame count is its authoritative extent (ADR-0017).
 - **Response modes:** *speak + bubble* runs everything. *Bubble only* skips TTS and performance (the
   avatar still shows expressions from cues). *Speak only* hides the bubble text but keeps captions if
   accessibility captions are on.
@@ -78,7 +80,7 @@ class TextToSpeech(Protocol):
 |------|---------|-------------|-------|
 | STT | **faster-whisper** (default) | Local | CTranslate2. `small`/`medium` models; multilingual with language auto-detect |
 | STT | Deepgram | Cloud | True streaming, low latency |
-| STT | Google Cloud Speech-to-Text v2 | Cloud | Streaming; kept because it's on the resume |
+| STT | Google Cloud Speech-to-Text v2 | Cloud | Streaming; a required v1 adapter (F10), judged like every adapter by its contract suite and measured accuracy/latency, not by resume value |
 | STT | OpenAI transcription | Cloud | Utterance-level |
 | TTS | **Kokoro-82M** (default) | Local | Apache-2.0, fast on CPU. Our own onnxruntime runner on the timestamped export gives Tier A alignment (03 §4.8) |
 | TTS | ElevenLabs | Cloud | Streaming + character timestamps (Tier B) |
@@ -131,6 +133,13 @@ publishes the numbers, which are concrete and credible portfolio evidence.
 These are individual ceilings, not an additive proof of the 2 s end-to-end target: adding the
 ceilings exceeds it. Both component and complete-path measurements must pass independently, using
 the warm/cold runs in 14 §5. No measured miss is waived by this planning checkpoint.
+
+"TTS first audio" and "avatar starts talking" mean **first audible output**, not the time a buffer was
+scheduled: the renderer's output-position estimate (ADR-0017) is the end point, and cold model load,
+warm first PCM, total generation, segment gaps and interruption recovery are reported separately.
+Current evidence: four-thread Kokoro inference took 634–1,476 ms across the five cached T0.8
+sentences, so the 400 ms target is unproven and the whole-sentence design is a hypothesis to be
+measured (T3.13, lab V-D.2), not a settled latency claim.
 
 ## 6. Later
 

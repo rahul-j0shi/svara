@@ -155,3 +155,11 @@ RSS alone cannot prove all GPU/heap resources were released; no forced garbage c
 These are diagnostic-page baselines, not the final avatar-only UI, an implemented core budget,
 presented-frame accuracy, 20-avatar leak evidence or Wayland acceptance. Record hardware, power
 mode, scaling, lockfile/model hashes and workload next to the output; failed budgets stay failed.
+
+## Known review finding
+
+The opt-in `managed-hints` bridge serializes every open/close request, so obsolete opens still run
+(and call `focus()`) after a later close (SV-23, mocked reproduction). Before production reuse it must
+follow ADR-0019's desired-state rule (lab unit V-E.1,
+[16](../../docs/revamp/16-lab-track-and-review-findings.md)). Frame counts reported here predate
+ADR-0020's deficit metrics and did not record the display refresh rate.
