@@ -19,6 +19,9 @@ This one says *exactly what* each feature does, where it stops, and how we know 
    task and test ID, and specifies cross-feature behavior. Its additional regression cases cover
    the Behaviour, Limits and Errors sections too; passing only the numbered ACs is insufficient.
    Feature dependencies below describe runtime relationships, not build order; use 13's task DAG.
+7. Evidence has three levels (ADR-0021): a fixture proves a code path, a lab result proves a named
+   corpus/rig/device outcome, and only the integrated checks in 14 accept a feature. Lab work in
+   [16](16-lab-track-and-review-findings.md) never marks an AC passed.
 
 **Feature template:** Purpose · Behaviour · In scope · Out of scope · Config & defaults · Limits ·
 Errors & edge cases · Depends on · Phase · Acceptance criteria.
@@ -32,8 +35,9 @@ Errors & edge cases · Depends on · Phase · Acceptance criteria.
 - Ubuntu **24.04 LTS** and **26.04 LTS**, GNOME, default Wayland session, x86-64 only. The avatar
   window runs through XWayland.
 - One user, one machine, one running instance.
-- English UI. The assistant replies in the user's language (F22); lip sync is language-agnostic
-  (F15). v1 is tested in English only.
+- English UI. The assistant replies in the user's language (F22). Lip sync is built on IPA so other
+  languages can work, but only the qualified path (English, the pinned Kokoro voice, the default
+  rig) is claimed; other espeak-ng languages are best-effort and listed as untested (F15).
 
 ### 0.2 Global non-goals for v1 (none of these will be built)
 
@@ -128,6 +132,27 @@ without a restart.
 | `launchAtLogin` | off | F01 |
 | `latencyOverlay` | off | F36 |
 
+### 0.5 Experience quality (global)
+
+Every surface must feel **liquid smooth**. These budgets apply to all features, like the privacy and
+permission rules, on the dev machine at scale 1.0 with the display refresh rate recorded. Design:
+[17](17-experience-and-motion.md); decision: ADR-0022; checks X26–X30 in 14 §3.4.
+
+| # | Budget | Limit |
+|---|---|---|
+| B1 | Input acknowledgement: double-click, right-click menu, Type, approval/bubble buttons, hover affordance | Visible response in the next painted frame ≤ 100 ms after the input event (Event Timing input-to-next-paint) |
+| B2 | Frame consistency while speaking, dragged, hovered or transitioning (60 fps target) | ≥ 99% of frame intervals ≤ 25 ms and none > 50 ms in each 60 s window; idle (30 fps): ≥ 99% ≤ 50 ms, none > 100 ms |
+| B3 | Avatar main-thread blocking | No task > 50 ms while speaking, dragged or transitioning; during an explicit model change each slice ≤ 100 ms while the previous model stays visible |
+| B4 | Drag tracking | Window follows the pointer with median lag ≤ 2 display frames; no jump on grab or release |
+| B5 | Transitions | Start ≤ 100 ms (F04 AC1), finish within their 17 §2 token; an interrupted transition continues from its current value without a discontinuity |
+| B6 | Audio gain changes (start, stop, pause, duck, volume, mute) | 5–20 ms ramp, no click; contained within F13/F27 stop bounds |
+| B7 | Windows | Avatar window maps only after its first rendered frame; Configure/Conversations show a themed first frame ≤ 400 ms warm (≤ 1 s cold); never a white or black flash |
+| B8 | Bubble and type box layout | Revealed words never move except during an animated resize or flip ≤ 220 ms |
+| B9 | Reduced motion | Sway, bounce and overshoot off; movement replaced by ≤ 150 ms opacity changes; blink and lip sync remain |
+
+A sustained miss may trigger the bounded quality ladder (17 §5), which is logged and never counts as
+meeting a budget. Earcons/state sounds remain out of scope (F04).
+
 ---
 
 ## F01 — App lifecycle
@@ -205,6 +230,8 @@ shutdown completes ≤ 5 s.
 - **Click-through:** only the avatar's bounding box, the bubble and open popovers receive clicks;
   everything else in the window passes clicks through (input shape region, 02 §1.2).
 - **Focus:** non-focusable, except while the type box (F06) or an approval bubble (F24) is open.
+  Focus is a replaceable desired state: the latest open/close request wins, obsolete requests never
+  focus the window, and native hints are reconciled to the latest state (ADR-0019).
 - **Scale:** `ui.avatar.scale` from 0.5 to 2.0 (step 0.1) resizes the window and the avatar together.
 - **Hide/minimise:** hides the avatar indefinitely while the tray and core remain. It returns through
   tray *Show*, the Show/Hide shortcut, `svara`, `--action show` or `--action toggle`.
@@ -214,7 +241,11 @@ shutdown completes ≤ 5 s.
   hidden. Already-playing speech may continue; Hide is not Stop. A pending approval retains its
   deadline and denies on timeout. Timer/restore semantics are in 14 §3.1.
 - **Show on all workspaces:** the avatar is visible on every GNOME workspace (sticky).
-- **Frame rate:** 30 fps when idle and not hovered, 60 fps while speaking, 0 fps while hidden.
+- **Frame rate:** 30 fps when idle and not hovered, 60 fps while speaking, hovered, dragged or
+  transitioning (§0.5), 0 fps while hidden. All animation advances by clock time. The
+  limiter preserves the target's phase on any display refresh rate (no fewer frames on a faster
+  display) and never renders catch-up bursts; on a display slower than the target, the deficit is
+  reported, not hidden (ADR-0020). Mouth timing follows the audio clock, not the frame cadence.
 - `prefers-reduced-motion` → sway and bounce are disabled; blinking and lip sync remain.
 
 **In scope:** everything above, including the avatar-only production surface and every restore path.
@@ -227,7 +258,8 @@ Wayland, 02 §1.2); click-through on per-pixel alpha (we use rectangles).
 `features.showOnAllWorkspaces` = on.
 
 **Limits:** idle CPU (renderer + shell) < 5% of one core at 30 fps on the dev machine; speaking
-holds 60 fps.
+holds 60 fps with zero target deficit on a ≥60 Hz display, measured by rendered frames against the
+target (14 §5), not by a dropped-frame estimate.
 
 **Errors & edge cases:**
 - Monitor unplugged while running → the avatar moves to the default position on the primary
@@ -612,6 +644,11 @@ detected).
 - Audio (PCM) + the performance segment go to the avatar surface, which plays them gaplessly on one
   `AudioContext` (03 §5). A final gain node applies `ui.outputVolume` live without disturbing the
   playback/performance clock.
+- Each segment's PCM frame count is its authoritative extent; audio and performance that disagree
+  are rejected before playback and the sentence is shown as text (ADR-0017).
+- Whole-sentence delivery is the v1 design. Its first-audible-output cost is measured, not assumed
+  (T3.13); if F12's limit or the 04 §5 end-to-end target is missed, the measured options (shorter
+  first sentence, runtime tuning, sub-sentence streaming) go to the user as a scope decision.
 
 **In scope (adapters):** `kokoro` (local, default, our onnxruntime runner on the timestamped export, 03 §4.8), `elevenlabs` (cloud),
 `azure_tts` (cloud), `openai_tts` (cloud).
@@ -624,7 +661,8 @@ streaming (post-v1, 03 §3); output device selection (the system default is used
 1.0; `tts.defaultLanguage` = `en` (the G2P language for typed turns, 03 §4.6); `tts.voicesByLanguage` = {}.
 
 **Limits:** local TTS first audio for a 10-word sentence ≤ 400 ms on the dev machine (measured, then
-fixed as the regression bar).
+fixed as the regression bar). "First audio" means first audible output at the device, reported
+cold and warm, separately from total generation time.
 
 **Errors & edge cases:** a TTS failure → that turn continues as *Bubble only* with a small chip
 "voice unavailable".
@@ -682,7 +720,9 @@ while speaking (duck and gate), and the Voice section recommends headphones.
 **Purpose.** A good-looking default avatar whose appearance is changed by editing `avatar.json`.
 
 **Behaviour.**
-- Default: the CC0 VRoid preset VRM (03 §1), shipped in the `.deb`.
+- Default: one exact, licence-verified free VRM selected and qualified in T0.12 (03 §1, ADR-0007),
+  shipped in the `.deb`. Its licence is recorded as published by its source; a VRoid preset is not
+  assumed to be CC0.
 - `avatar.json` fields (exhaustive for v1): `model`, `framing` (`height`, `offsetY`, `cameraFov`,
   `shot`: `bust` or `full`), `materials` (by name/glob: `color`, `emissive`, `opacity`), `meshes`
   (by name/glob: `visible`), `springBones` (`stiffness`, `gravity`, `wind`), `face`
@@ -709,7 +749,9 @@ a missing model file → fall back to the default model with a warning.
 **AC.**
 1. Changing a hair colour in `avatar.json` updates the avatar within 1 s without a reload.
 2. Importing a VRM with "modification: prohibited" blocks looks edits and says why.
-3. `assets/LICENSES.md` names the preset and its CC0 source.
+3. `assets/LICENSES.md` names the exact default asset, its source and terms URLs, the terms as
+   checked on a stated date, its SHA-256 and modifications, and links its committed qualification
+   report.
 
 ---
 
@@ -720,8 +762,14 @@ language.
 
 **Behaviour.** As specified in 03 §3–§5: timing tiers A/B/D (C is post-v1 unless Spike B requires
 it), IPA → 15 visemes, shape rules, amplitude envelope, retarget maps, coarticulation and smoothing in
-the renderer. G2P: the espeak-ng subprocess for every language, Tier D for
+the renderer. G2P: the espeak-ng subprocess for every language (literal text via stdin), Tier D for
 anything uncovered.
+- Segment extent, key ranges, envelope and clock rules: ADR-0017. One articulation owner (the
+  player), declared phone inventories and unknown-symbol reporting: ADR-0018.
+- The 15 labels are canonical, not visible shapes: `vrm-basic` shows five vowels and a closed mouth,
+  with FF/TH/SS/CH as documented approximations.
+- Language support is a published qualification matrix (language × voice × rig); only rows that
+  passed are claimed.
 
 **In scope:** retarget maps `vrm-basic` (default) and `vrm-extended` (used if the model has the
 extra shapes); the tuning parameters in `avatar.json` `lipsync`.
@@ -734,7 +782,8 @@ per-language hand-tuned viseme tables.
 
 **Limits:** viseme computation ≤ 30 ms per sentence (core); the renderer update ≤ 1 ms per frame.
 
-**Errors & edge cases:** any engine failure falls back to Tier D; lip sync never delays audio.
+**Errors & edge cases:** any engine failure falls back to Tier D; lip sync never delays audio. An
+unsupported phone is counted and shown in diagnostics and the lab, never silently mapped to silence.
 
 **Depends on:** F12, F14.
 
@@ -811,9 +860,14 @@ avatar window; otherwise it looks at the viewer (03 §4.5). Optional idle `.vrma
 
 **Behaviour.** Configure → Advanced → Lip-sync lab:
 - Enter text, choose the TTS provider/voice, and click Synthesise.
-- Shows a timeline: waveform, phonemes, viseme keys, envelope and cues, with a play head.
+- Shows a timeline: waveform, phonemes, viseme keys, envelope and cues, with a play head, plus final
+  rig weights, unknown-phone markers and the graph/output clock difference (ADR-0017).
+- Can load human-reviewed landmark annotations for a fixed corpus and show model interval, reference
+  interval and rendered pose together; agreement of model durations with themselves is not shown as
+  accuracy.
 - Playback at 1× / 0.5× / 0.25×, scrubbing, and A/B comparison of tiers A/B/D.
-- Export the track as JSON (the golden-test format).
+- Export the track as JSON (the golden-test format), including voice/model revision, hashes and
+  timing tier.
 
 **Out of scope:** editing keyframes by hand; recording the user's own voice; video export (use a
 screen recorder).
@@ -1505,6 +1559,7 @@ from outside the built-in registry; nested isolated contexts.
 the binary audio framing; the `/assets` route; protocol version integer; pydantic → TS type
 generation with a CI drift check.
 The management operations and playback acknowledgements in 13 §7.4 are part of this catalogue.
+Performance segments carry an authoritative PCM `frameCount` (ADR-0017).
 The extension surface and microphone-upload shapes are reserved, rejected in desktop v1.
 
 **Out of scope:** remote (non-loopback) connections; multiple users; any message not in the
@@ -1539,3 +1594,11 @@ v1 is done when **every AC for F01–F40 passes**, and in addition:
 Any new feature, limit change or scope expansion is proposed as an edit to this file with a one-line
 reason. It is merged before any code for it is written, and 11's traceability table is updated in the
 same change.
+
+- 2026-10-10 — F14 default/AC3 no longer assume a CC0 preset; F02 pacing/focus, F12 extent/first
+  audio, F15 ownership/inventory/qualified languages, F18 independent landmarks, F40 `frameCount`.
+  Reason: [engineering review SV-01–SV-24](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
+  showed these contracts were wrong or ambiguous. No AC was added or removed and no limit relaxed.
+- 2026-10-10 — §0.5 experience budgets B1–B9 and F02 frame-rate elevation during motion. Reason: the
+  user requires a liquid-smooth experience and no plan defined how it must feel (ADR-0022, 17). Global
+  checks X26–X30 in 14; no feature AC changed.

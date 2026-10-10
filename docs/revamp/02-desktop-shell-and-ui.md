@@ -66,6 +66,8 @@ both) and choose by measurement on Ubuntu 24.04 and 26.04, on an Intel/AMD iGPU 
   that check is correctness-only. **NVIDIA is not available for testing.** It is a documented,
   best-effort configuration (the env workaround in 01 §3a) and listed as a known risk.
 - The idle avatar stays under 5% CPU at 30 fps, and speaking holds 60 fps without dropped frames.
+  (These spike measurements used the probe's old dropped-frame estimator, which cannot detect a
+  steady cadence shortfall; later frame claims follow ADR-0020.)
 - A transparent background with no black rectangle, click-through via input region, and
   always-on-top + drag under XWayland all work.
 - WebAudio playback works in the renderer.
@@ -138,7 +140,9 @@ request; they are never embedded beside the avatar.
 
 - **Default position:** bottom-right of the primary monitor's *work area* (excluding the GNOME top
   bar and the Ubuntu dock), with a 16 px margin.
-- **Drag:** `pointerdown` + move > 4 px → the selected Electron native drag/position bridge. On drop, save `{monitor id,
+- **Drag:** `pointerdown` + move > 4 px → the selected Electron native drag/position bridge. The grab
+  offset is kept so the character does not jump, and it tracks the pointer within two display frames
+  at 60 fps (12 §0.5 B4). On drop, save `{monitor id,
   x, y}` to `config.ui.avatar.position`. If that monitor is gone at next launch, fall back to the
   default.
 - **Click vs double-click vs drag** are told apart by a small gesture recogniser (distance and time
@@ -151,6 +155,11 @@ request; they are never embedded beside the avatar.
   The bounded candidate order and failure decision are G-PRESENCE in 14 §2. Prove
   above/drag/typing together on Wayland before choosing the implementation; do not change the
   avatar-only UX to accommodate the experiment. Returning prior focus is best-effort.
+  Whatever mechanism wins, interaction focus is a **replaceable desired state** (ADR-0019): one
+  active native-helper operation plus the latest pending state, never a FIFO of every toggle; no
+  obsolete request may call focus after a later close; native hints are reconciled to the latest
+  state after an in-flight helper finishes; the owned-window sender check stays. The current
+  `managed-hints` spike queues every request (SV-23) and must be changed before production reuse.
 - **Double-click → listen.** Toggles listening. The avatar shows a *listening* state (pose, glow, ear
   cue). A second double-click, a VAD end-of-speech or Esc stops it.
 - **Click-through:** the window is bigger than the avatar (room for the bubble). The renderer reports
@@ -282,11 +291,15 @@ translation is possible later) and light/dark themes beyond following the OS.
 
 ## 8. Accessibility & polish
 
-These are cheap to do and they show in a portfolio:
+How every interaction must *feel* — motion tokens, choreography for each moment, input and frame
+budgets, audio ramps and window first paint — is the liquid-smooth contract in
+[17](17-experience-and-motion.md) (ADR-0022, budgets in 12 §0.5). The items below are part of it:
 
-- Respect `prefers-reduced-motion` (reduce idle sway, no bounce).
+- Respect `prefers-reduced-motion` (reduce idle sway, no bounce; movement becomes short fades, B9).
 - Captions: the bubble is also the caption track when voice output is on.
 - Keyboard: menus and Configure are keyboard-navigable when focused. Global bindings are only
   Show/Hide, Stop and push-to-talk (F01/F09/F27), opt-in and rebindable.
 - Frame budget: the renderer caps at 30 fps when idle and not hovered, and 60 fps while speaking. It
-  pauses when the avatar is hidden. Battery matters for an always-on app.
+  pauses when the avatar is hidden. Battery matters for an always-on app. The cap uses a
+  phase-preserving deadline, so a 144/165 Hz display does not under-render, and diagnostics report
+  callback rate, rendered fps and target deficit separately (ADR-0020).

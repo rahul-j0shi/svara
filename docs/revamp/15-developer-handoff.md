@@ -6,16 +6,22 @@ accepted. The code baseline audited before this plan is commit `79fc6b1`; planni
 `23176a7` and the subsequent focus experiment build on it. Use current `main`, not those old commits,
 when creating the next branch. Keep all earlier task branches.
 
+**2026-10-10:** the [engineering review, rounds 1–5](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
+(reviewed commit `f33c994`, no code fixed by it) is adopted: ADR-0017–0021, a bounded **lab track**
+and the finding owner map in [16](16-lab-track-and-review-findings.md). Product order is unchanged.
+Start with §4: the product route is blocked on Wayland environments, so the next developer session is
+lab unit **V-A.1** unless those environments are supplied.
+
 ## 1. What actually exists
 
 | Area | Current state | How to treat it |
 |---|---|---|
 | `core/src/svara_core/` | Package directories and `__init__.py` scaffolding | Implement the runtime in Phase 1; do not assume services/CLI exist |
-| `packages/avatar/src/` | Spike renderer, metrics, pure performance player and tests | Reuse reviewed pure logic; separate benchmark controls and production API in T2.4/T3.8 |
-| `apps/desktop/src/spike-app.tsx`, `spike-playback.ts` | Diagnostic page and canned audio owner | Development-only. Production entry point is a new T2.3 deliverable |
-| `apps/desktop/electron/` | Electron probe, preload, validation, tests | Reference for native experiments; T2.1 owns production lifecycle/security bridge |
+| `packages/avatar/src/` | Spike renderer, metrics, pure performance player and tests | Reuse reviewed pure logic; separate benchmark controls and production API in T2.4/T3.8. Known unfixed findings: triple closure suppression and FF collapse (SV-02/SV-10), accepts out-of-range keys (SV-21), phase-reset limiter and dropped-frame estimator (SV-22), pre-commit candidate leak (SV-20). In-loader and disposal fences passed review — keep them |
+| `apps/desktop/src/spike-app.tsx`, `spike-playback.ts` | Diagnostic page and canned audio owner | Development-only. Production entry point is a new T2.3 deliverable. Known: startup fetch/status ownership (SV-18/SV-19), audio/track pairing unchecked (SV-16), graph-time face clock (SV-17). Stale `onended`/late-decode guards passed — keep them |
+| `apps/desktop/electron/` | Electron probe, preload, validation, tests | Reference for native experiments; T2.1 owns production lifecycle/security bridge. Known: `managed-hints` FIFO runs obsolete opens after close (SV-23) |
 | `packages/protocol/` | Workspace placeholder | T1.2/T1.6 add schemas/generation, not hand-maintained duplicate TS models |
-| `spikes/kokoro/` | Pinned ONNX runner, five fixtures, closure/timing tests | Duration extraction works; visible timing and speed gates are still open |
+| `spikes/kokoro/` | Pinned ONNX runner, five fixtures, closure/timing tests | Duration extraction works; visible timing and speed gates are still open. Known: text in eSpeak option position (SV-24), unknown symbols → `sil` (SV-09), per-sentence envelope normalization (SV-14), integer-ms extent (SV-15), release beyond segment (SV-21) |
 | `spikes/ubuntu-integration/` | Capability/mic probes, opt-in native input-hint helper and owned-window X11 focus regression | Ten X11 focus checks pass; neither Wayland interaction nor acoustic AEC is proven |
 | `docs/spikes/`, `docs/adr/`, foundation audit | Evidence and accepted design decisions | An accepted ADR is not a passed feature test |
 
@@ -27,7 +33,10 @@ An unrelated untracked `:memory:.ses` may exist; leave it untouched and out of t
 
 ## 2. Read order and source of truth
 
-1. [Foundation audit](../reviews/2026-09-27-foundation-audit.md): completed work and reopened gates.
+1. [Foundation audit](../reviews/2026-09-27-foundation-audit.md): completed work and reopened gates;
+   then [16](16-lab-track-and-review-findings.md) for the review findings, lab track and the items
+   only the user can unblock (16 §7); and [17](17-experience-and-motion.md) before any UI, avatar or
+   audio task, because its budgets (12 §0.5) are part of every such task's Done.
 2. [12](12-feature-specification.md): normative F01–F40 scope, limits and defaults.
 3. [14](14-acceptance-and-integration.md): acceptance owners, cross-feature semantics and gates.
 4. [13](13-implementation-guide.md): exact dependency graph, toolchain, config and wire contracts.
@@ -113,6 +122,27 @@ do not bypass this prerequisite or change their login/session remotely without a
 Wayland releases, ADR decision and remaining product-level measurements explicitly assigned. A
 partial checkpoint can be merged but must retain blocked status; it does not authorize Phase 1.
 
+Review additions to this package: apply ADR-0019's focus desired-state rule (lab V-E.1) before the
+Wayland matrix in step 3; take step 5's visual rerun only after V-A.1/V-A.2 so it measures the
+corrected final pose and envelope; record display refresh rate and ADR-0020 metrics in step 5/6.
+
+### 4.1 While the product route is blocked — lab track
+
+As of 2026-10-10 the inputs above (Wayland 24.04 session, 26.04 GNOME VM) are unavailable. Ask the
+user for them (16 §7) and, meanwhile, work the lab track in
+[16 §3](16-lab-track-and-review-findings.md#3-work-units), one unit at a time:
+
+- **Next unit: V-A.1** — final mouth-pose contract (SV-02, SV-10). Touch only
+  `packages/avatar/src/performance-player.ts`, `avatar-renderer.ts` and their tests; the
+  generator's hold/release timing in `spikes/kokoro` stays as is. Implement ADR-0018: generator
+  timing only, player as the single blender with PP-driven dominance and partial FF jaw reduction,
+  retarget as a pure linear map. Regressions assert **final** rig weights for full FF, PP→vowel at
+  25/40/50/80/120 ms, FF→vowel, short closure, overlap, silence and end of speech.
+- **Out of scope for V-A.1:** envelope, extent or validation changes (V-A.2), G2P (V-A.3), new
+  rigs, providers, or any product task.
+- **Done:** the regressions and existing tests pass with `make lint test`; result recorded in the
+  16 §8 format, labeled *fixture*. A real-rig sweep waits for V-B.1.
+
 ## 5. Implementation locations and test ownership
 
 Paths below are target locations; many modules do not exist yet. Create only what the selected
@@ -153,7 +183,8 @@ They compose the modules, test the cross-feature cases in 14, and update the acc
 Before coding, put this in the branch's PR or checkpoint note (local notes are sufficient if no PR):
 
 ```text
-Task ID / title:
+Task ID / title (or lab unit V-…):
+Finding IDs (SV-…) and evidence level (fixture / lab / product):
 Base main commit:
 Dependency commits and phase gate evidence:
 Scope: Fxx / AC-Fxx.n / Xnn:
@@ -174,6 +205,8 @@ One task at a time; local end-to-end evidence when the runtime exists, fake cont
 `make lint test`, desktop build, schema drift checks when implemented, and `git diff --check` are
 the common merge floor. Run relevant integration tests explicitly until they join the root target.
 CI supplements local verification; it cannot replace Wayland, acoustic, license or policy evidence.
+Lab units follow the same template and merge floor; they record their result as a fixture or lab
+result and never tick a task, gate or AC.
 For planning edits, run `node docs/revamp/check-plan.mjs`: it checks task dependency cycles/unknown
 references, all 114 AC assignments, R1–R38 retention and local Markdown file links. It is read-only
 and intentionally does not certify behavioral correctness or mark any task complete.

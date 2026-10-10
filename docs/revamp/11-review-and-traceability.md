@@ -51,6 +51,7 @@ cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R3
 | R36 | Start/use Svara from keyboard and terminal, including when it is not running | 01 §3a; 02 §1.2, §3.1; 12 F01/F09 | 2–3 | Covered; Talk/Show/Toggle/Configure have defined cold-start behaviour |
 | R37 | Turn it down/off at distinct levels | 02 §3.1; 12 F03/F11/F12/F38 | 2–7 | Covered: scale, hide, mic mute, output volume/pause, disable autostart, quit, uninstall/purge |
 | R38 | Right-click access to controls and configuration | 02 §3; 12 F03 | 2 | Covered with an exhaustive native-menu order and checked state |
+| R39 | The experience is liquid smooth (2026-10-10) | 17; 12 §0.5 B1–B9; ADR-0022; 14 §3.4 X26–X30 | 2–3, 6–7 | Covered in design; measured at T2.11/T3.15, published at T7.5 |
 
 ## 2. Gap log (review of the first version of this plan)
 
@@ -154,6 +155,24 @@ cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R3
 | G81 | Provider capability assumptions and successful login treated as distribution permission | High | 05 capability rules and separate technical/policy gate; 14 G-SUBSCRIPTION |
 | G82 | No precise developer starting point or per-task evidence handoff | High | 15 current-state map, first package, module/test map and template |
 
+**Fifth review: engineering review rounds 1–5 (2026-10-08/09), adopted 2026-10-10.** Full finding
+ledger, owners and lab work units are in [16 §5](16-lab-track-and-review-findings.md#5-finding-ledger-sv-01sv-24);
+evidence is in [the review](../reviews/2026-10-09-engineering-review-rounds-1-5.md).
+
+| # | Gap found | Severity | Fixed in |
+|---|-----------|----------|----------|
+| G83 | Default avatar plan called VRoidPreset A–Z CC0; their terms say they are not (SV-01) | High (licence) | ADR-0007, 03 §1, 12 F14 AC3, 14 G-ASSETS, T0.12 |
+| G84 | Closure suppression applied by three layers; FF collapsed to neutral on the basic rig (SV-02, SV-10) | High | ADR-0018, 03 §4.3–4.4, T3.7/T3.8 |
+| G85 | Integer-ms extent vs one-sample rule; out-of-range release keys; unchecked audio/track pairing; per-sentence envelope normalization; graph clock used as heard time (SV-14–17, SV-21) | High | ADR-0017, 03 §3/§5, 13 §7, T1.6/T3.6–T3.8 |
+| G86 | Unknown native phones silently silent; G2P text in CLI option position (SV-09, SV-24) | High | ADR-0018, ADR-0009, 03 §4.2/§4.6, T3.6 |
+| G87 | Async ownership began too late or ended too early: avatar selection/status/candidate, focus FIFO, native job slots (SV-05, SV-18–20, SV-23) | High | ADR-0019, ADR-0005, 01 §5, 02 §3, T2.3/T2.4/T3.6 |
+| G88 | Frame limiter under-renders on high-refresh displays; dropped-frame estimator hides deficits (SV-22) | Medium | ADR-0020, 12 F02, 14 §5, T2.5/T2.11 |
+| G89 | Lab milestone mixed with the whole assistant; mock evidence could read as hardware; reuse shortlist drifting into work (SV-03, SV-08, SV-11, SV-13) | High (process) | ADR-0021, 16, 14 §1 |
+| G90 | Universal language and rig claims exceeded tested coverage (SV-07) | Medium | 03 §4.6, 12 §0.1/F15, qualification matrix |
+| G91 | Unmeasured sentence-first latency confidence; "few hundred ms" cancellation waste (SV-04, SV-05) | Medium | 03 §3, 04 §5, 01 §5, T3.13 |
+| G92 | README claimed a `v0-prototype` tag that the remote does not have; Google STT justified by resume value | Low (credibility) | README, 04 §4, 16 §7 |
+| G93 | No plan for how interactions feel: input acknowledgement, continuity, jank, audio clicks, window flashes | High (UX) | 17, 12 §0.5, ADR-0022, 14 §3.4 |
+
 ## 3. Risk register (what can still go wrong)
 
 | Risk | Likelihood | Impact | Mitigation / trigger |
@@ -164,7 +183,12 @@ cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R3
 | PipeWire echo-cancel drop-in conflicts with the user's audio setup | Low–Medium | Medium | Opt-in, one-click revert (remove the drop-in), headphones fallback |
 | Echo cancellation is too weak for barge-in on laptop speakers | Medium | Medium | AEC then documented duck-and-gate; headphones recommendation does not pass F13's speaker AC; scope changes require approval |
 | Kokoro gives no usable timing | Low–Medium | High | Evaluate existing Tier B/D paths; Tier C requires an approved dependency/license ADR, not silent new scope |
-| Lip sync looks "off" despite correct data | Medium | High | Lip-sync lab + tuning parameters (lookahead, attack/release) in `avatar.json`; vrm-basic fallback |
+| Lip sync looks "off" despite correct data | Medium | High | Lip-sync lab + tuning parameters (lookahead, attack/release) in `avatar.json`; vrm-basic fallback; final-pose regressions and one articulation owner (ADR-0018) |
+| The custom native-timing path shows no benefit over a reused baseline | Medium | Medium | Lab V-D.2 compares one baseline on the same corpus/rig; keep the simpler compatible option by recorded decision; any runtime/dependency change needs an ADR and user decision |
+| The chosen free avatar's terms or mouth capability are inadequate | Medium | Medium | ADR-0007 selection order; qualification report; one replacement, then a named missing capability before further search |
+| Output/display latency makes measured offset exceed 45 ms | Medium | High | Output-position sampling with recorded fallback; calibrated capture; unverified if precision is insufficient (ADR-0017) |
+| Higher frame rates during motion and the quality ladder push CPU over budget, or jank persists on the iGPU | Medium | High | Measure X27 early (lab V-E.2, T2.5); work off the animation path; the ladder is logged and never a budget waiver |
+| Lab work is mistaken for product progress | Medium | High | ADR-0021 evidence levels; lab units never tick tasks, gates or ACs |
 | Anthropic changes subscription terms again | High | Medium (subscription is now the default Claude path) | Same adapter layer has the API-key path; switching is one config value; Spike E gate; re-check terms before any public release |
 | Rendering or driver problems on 26.04 or NVIDIA that the dev machine can't reproduce | Medium | Medium | VM functional checks for 26.04; NVIDIA documented as best-effort with the env workaround; community bug reports triaged post-release |
 | Native deps lack Python 3.14 wheels | Low | Medium | Spike C → pin 3.13 (ADR) |
@@ -186,9 +210,13 @@ Each piece of structure has to justify itself against a concrete requirement:
 | Contract test suites per port | ~10 adapters | Keep |
 | ADRs | Portfolio reviewers + your future self | Keep them short (≤ 1 page) |
 | LangGraph, DI framework, Redux, microservices, a DB server, accounts, a cloud backend | Nothing | **Excluded** |
-| Sub-sentence audio streaming, Tier C alignment, third-party Python plugins, long-term memory, wake word | Nice-to-haves | **Deferred** to post-v1 |
+| Sub-sentence audio streaming, Tier C alignment, third-party Python plugins, long-term memory, wake word | Nice-to-haves | **Deferred** to post-v1 (streaming re-enters only through a measured T3.13 miss and a user decision) |
+| Custom phoneme→viseme engine (ADR-0008) | R21 lip sync as core pipeline | Keep, but only where the lab shows a benefit over one reused baseline (V-D.2); otherwise adopt the simpler compatible baseline by recorded decision |
+| Custom fifteen-shape avatar art | Nothing in v1 | **Excluded**: `vrm-basic` with documented approximations; extended shapes only if a rig has them |
+| A shared async scheduler framework | Nothing beyond per-boundary ownership | **Excluded** (ADR-0019: one principle, specialized implementations) |
 
 ## 5. Still open (needs your answer)
 
-See the foundation audit and T0.10 evidence. Interactive Wayland sessions/VM access are needed to
-close platform gates. No automatic UX expansion or phase advancement follows from this review.
+See the foundation audit, T0.10 evidence and [16 §7](16-lab-track-and-review-findings.md#7-open-items-that-need-the-user-not-developer-work):
+Wayland sessions/VM access, speaker/mic consent, the `v0-prototype` tag push, account tests and any
+publication. No automatic UX expansion or phase advancement follows from this review.

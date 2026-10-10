@@ -30,3 +30,8 @@ Evidence:
 - 2026-10-02: the managed-input-hint candidate passed combined idle click/keyboard, drag, Type,
   Escape and keyboard approval on X11 without losing above/managed state. Both Wayland validations
   remain required before adopting it; [reproduction](../../spikes/ubuntu-integration/README.md).
+- 2026-10-10: the engineering review (SV-23) showed that the candidate's serial queue still executes
+  obsolete opens (and their `focus()` calls) after a later close. Before production reuse the bridge
+  must treat focus as replaceable desired state with native-hint reconciliation
+  ([ADR-0019](0019-own-asynchronous-operations-by-intent.md); lab V-E.1, product T2.3). The finding is
+  a mocked lifecycle reproduction, not an observed Wayland incident.

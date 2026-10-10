@@ -28,3 +28,7 @@ Evidence:
 - [Feature F39](../revamp/12-feature-specification.md#f39--plugin-kernel-developer-facing) defines the
   observable guarantees.
 - T1.1 implements the kernel and randomized lifecycle tests.
+- 2026-10-10: the engineering review (SV-12) refined its earlier skepticism: provider swaps, toggles
+  and reversible effects justify this small kernel. Keep `emit`/`waterfall`/`serial` only, prove
+  teardown during active work, and do not grow the kernel to solve per-boundary ownership
+  (ADR-0019). Its justification is these requirements, not portfolio appeal.

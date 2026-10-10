@@ -45,3 +45,8 @@ Evidence:
   the explicit all-criteria preference gate and Electron won under the predeclared fallback rule.
 - XWayland on GNOME 46/50, Ubuntu 26.04 VM behavior, and NVIDIA remain recorded limitations for
   T0.10; they were not inferred from the X11 measurements.
+- 2026-10-10: the probe's dropped-frame estimator cannot detect a steady cadence shortfall and the
+  limiter under-renders on some high-refresh rates (SV-22). Those shell-comparison numbers stand as
+  rendered-frame counts on an X11 host whose refresh rate was not recorded; future frame claims
+  record the refresh rate and use
+  [ADR-0020](0020-pace-frames-by-target-phase-and-report-deficits.md)'s metrics.

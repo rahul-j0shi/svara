@@ -26,6 +26,20 @@ T6.2 (looks/import), T6.4 (retention/export) and T6.6 (lifecycle/shortcuts) befo
 T4.15 integration and T4.16 packaging. Publication needs explicit approval; local development is
 not blocked on publishing to GitHub.
 
+## Bounded lab track (parallel, separate acceptance)
+
+Adopted 2026-10-10 from the engineering review (ADR-0021, [16](16-lab-track-and-review-findings.md)).
+A small speech/avatar lab — one pinned voice, English, one qualified free rig, one playback
+environment, a frozen eight-utterance corpus and one reuse baseline — runs alongside the phases
+while Phase 0 platform gates wait for Wayland environments. It fixes contracts on spike and pure
+package code (final mouth pose, PCM extent, literal G2P, asset qualification, operation ownership,
+frame pacing) and produces timing evidence. It is **not** a phase, does not tick any checkbox below,
+and does not accept the assistant.
+
+Its natural stopping point is an honestly labeled **lab case study** (invariant → breaking fixture →
+wrong assumption → change → regression → limits), publishable with the user's approval before
+v0.5. The v0.5 preview and v1 keep every requirement below.
+
 ---
 
 **Scope rule:** every task below implements features specified in [12](12-feature-specification.md).
@@ -43,7 +57,8 @@ not a commit log; the audit records foundations implemented and validation still
 **Goal:** a clean repo with CI, and the three biggest unknowns answered.
 
 Tasks
-- [ ] Tag the current state `v0-prototype`. Remove `main.py`, `speech_to_text.py`, `llm_call.py`,
+- [ ] Tag the current state `v0-prototype` (removal done; the tag for merge `2389194` was never pushed
+      to the remote — awaiting the user's approval, 16 §7). Remove `main.py`, `speech_to_text.py`, `llm_call.py`,
       `talking-head/`, `backend/`, `frontend/`, `plan.md`, `ui_plan.md`, `ARCHITECTURE.md`,
       `.env.example*`, the root `requirements.txt` (history keeps them).
 - [ ] Monorepo skeleton (01 §6): `core/` uv project on Python 3.14, `apps/desktop` Electron + React +
@@ -61,7 +76,8 @@ Tasks
 - [ ] **Spike B (lip sync):** the minimal Kokoro runner (03 §4.8) synthesises 5 sentences from the
       timestamped export; convert `pred_dur` to phoneme times; hand-build a viseme track; play it on
       the VRM; compare phoneme onsets with the audio envelope.
-      *Gate:* it looks convincing, or we choose the Tier B/C path for v1.
+      *Gate:* G-TIMING (14 §2): a calibrated visual rerun after lab V-A.1/V-A.2, not "looks
+      convincing"; if Tier A is inadequate, evaluate the existing Tier B/D paths.
 - [ ] **Spike C (deps):** the PyPI check is already done (13 §2: every chosen package has Python 3.14
       Linux wheels). Spike C installs the locked set with uv on Python 3.14, imports each package, and
       runs one smoke call per native package (onnxruntime, ctranslate2, av, dbus-fast) on uv-managed
@@ -79,8 +95,8 @@ Tasks
       auth provenance is recorded, and first-token latency is measured. *Gate:* isolation/auth failure
       leaves the adapter pending; an API-key path requires explicit selection. Distribution policy
       is a separate release gate (05 §3), not proved by a successful query.
-- [ ] Obtain the default avatar: export a CC0 VRoid preset as VRM 1.0 (03 §1); write
-      `assets/LICENSES.md`.
+- [ ] Obtain the default avatar: select one exact licence-verified free VRM (ADR-0007 order; VRoid
+      presets are not CC0), qualify it (lab V-B.1 report), write `assets/LICENSES.md`.
 - [ ] T0.13 foundation exit: record all remaining gates and evidence (14 §2). Extension pairing and
       resume direction are already decided; do not reopen them as missing decisions.
 
@@ -142,7 +158,8 @@ Tasks
       Show/Hide can be added now, while Stop/push-to-talk enable when their features land.
 
 **Exit:** install from a dev build, type a question, and watch the answer stream into the bubble
-while the avatar looks thoughtful. Dragging, the menu and Exit all work. It survives a core crash.
+while the avatar looks thoughtful, with every interaction meeting the liquid-smooth budgets (12 §0.5,
+X26–X29). Dragging, the menu and Exit all work. It survives a core crash.
 
 ---
 
@@ -163,10 +180,12 @@ while the avatar looks thoughtful. Dragging, the menu and Exit all work. It surv
       interruption event/note (F13), without editing sent history.
 
 3b — Performance engine
-- [ ] G2P (espeak-ng subprocess, all languages), Kokoro runner (03 §4.8), phoneme → viseme table, Tier A and B timing,
-      Tier D real-time fallback, shape rules, envelope.
-- [ ] `PerformancePlayer` with lookahead, attack/release, closure dominance, envelope jaw gain,
-      expression blending; retarget maps `vrm-extended`, `vrm-basic`.
+- [ ] G2P (espeak-ng subprocess, text on stdin), Kokoro runner (03 §4.8), declared phone inventory,
+      phoneme → viseme table, Tier A and B timing, Tier D fallback, timing rules, frame-count extent,
+      played-PCM envelope (ADR-0017/0018).
+- [ ] `PerformancePlayer` as the single articulation owner (lookahead, attack/release, closure
+      dominance, envelope jaw gain, expression blending); linear retarget maps `vrm-extended`,
+      `vrm-basic`; validation before playback; output-clock sampling.
 - [ ] Expression and gesture cues from tags; sentiment fallback; VRMA gesture clips (wave, nod,
       shrug).
 - [ ] Lip-sync lab (03 §6) + golden tests + bilabial closure test on 30 sentences.
@@ -291,11 +310,11 @@ Tasks
 |-------|-------|
 | Kernel | Property-based revertibility + reactivity (Hypothesis) |
 | Adapters | Shared contract suites per port, recorded HTTP cassettes (no network in CI) |
-| Pipeline | Fake STT/LLM/TTS adapters with scripted timings; assert event order, cancellation, backpressure |
-| Performance | Golden viseme tracks; bilabial closure metric; `PerformancePlayer.update` vitest goldens |
+| Pipeline | Fake STT/LLM/TTS adapters with scripted timings; assert event order, cancellation, backpressure, native slot ownership under repeated cancel/replace |
+| Performance | Golden viseme tracks; bilabial closure metric; final rig-weight goldens (not only intermediate curves); segment extent/pairing rejection; reviewed landmark corpus |
 | Permissions | Table-driven decision tests incl. path traversal and symlinks |
 | Protocol | Schema drift check; round-trip (Python → JSON → TS types) |
-| UI | Component tests for bubble/menu logic; manual demo checklist per phase (no heavy e2e in v1) |
+| UI | Component tests for bubble/menu logic; manual demo checklist per phase (no heavy e2e in v1); smoothness traces (frame intervals, long tasks, input-to-paint, gain ramps) per 14 §5 |
 | End to end | `--demo` mode with fake providers: a scripted run core ↔ headless avatar surface in CI (text + performance messages asserted) |
 | Platform | Manual checklist on Ubuntu 24.04 + 26.04 per release (02 §1.2 items, portal grants, multi-monitor, NVIDIA) |
 

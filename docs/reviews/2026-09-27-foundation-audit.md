@@ -8,6 +8,11 @@ wishlist. Do not start T0.11 or Phase 1. This is the user's requested correction
 resume package. Coqui was removed from v1 by explicit user choice. The historical planning gaps
 below are resolved by that follow-up; the empirical gates and implementation status are unchanged.
 
+**Review follow-up, 2026-10-10:** the [engineering review](2026-10-09-engineering-review-rounds-1-5.md)
+found 24 further issues in this foundation (SV-01–SV-24), including some corrections listed below
+that remain incomplete (closure handling, VRM load ownership). They are owned in
+[16](../revamp/16-lab-track-and-review-findings.md); this audit's status table is otherwise unchanged.
+
 ## Actual progress
 
 Core packages are scaffolding. There is no assistant core, CLI, tray or settings window yet.
@@ -17,7 +22,7 @@ implemented. The diagnostic panel is not the requested desktop UX.
 
 | Task | Status | Evidence / remaining gate |
 |---|---|---|
-| T0.1 reset | Implemented | Prototype preserved at `v0-prototype` |
+| T0.1 reset | Implemented except tag | Prototype preserved in history at `2389194`; the `v0-prototype` tag was never pushed (corrected 2026-10-10, awaiting approval) |
 | T0.2 scaffold / Svara rename | Implemented | Workspaces, identities, LFS attributes |
 | T0.3 tooling | Implemented, expanded here | Local checks; remote CI must be verified for this commit |
 | T0.4 ADRs | Written | Accepted architecture does not mean implemented behavior |
