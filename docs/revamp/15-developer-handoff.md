@@ -1,16 +1,13 @@
 # 15 — Developer handoff: start from the current repository
 
-Read this first when resuming development. The plan is implementation-ready, with a partial
-foundation follow-ups through 2026-10-03; it does not add a production runtime or mark any feature
-accepted. The code baseline audited before this plan is commit `79fc6b1`; planning checkpoint
-`23176a7` and the subsequent focus experiment build on it. Use current `main`, not those old commits,
-when creating the next branch. Keep all earlier task branches.
+Read this when you sit down to write code. [00](00-vision-and-overview.md) explains what Svara is
+and where everything lives; this page says exactly what exists today, how to reproduce the baseline,
+what to work on next and how to record the result.
 
-**2026-10-10:** the [engineering review, rounds 1–5](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
-(reviewed commit `f33c994`, no code fixed by it) is adopted: ADR-0017–0021, a bounded **lab track**
-and the finding owner map in [16](16-lab-track-and-review-findings.md). Product order is unchanged.
-Start with §4: the product route is blocked on Wayland environments, so the next developer session is
-lab unit **V-A.1** unless those environments are supplied.
+**Next work:** the product route is blocked on Wayland environments (§4), so the next session is lab
+unit **V-A.1** (§4.1, [16](16-lab-track-and-review-findings.md)) unless those environments are
+supplied. No feature is accepted yet; the runtime is scaffolding. Always branch from current `main`
+and keep earlier task branches.
 
 ## 1. What actually exists
 
@@ -33,15 +30,16 @@ An unrelated untracked `:memory:.ses` may exist; leave it untouched and out of t
 
 ## 2. Read order and source of truth
 
-1. [Foundation audit](../reviews/2026-09-27-foundation-audit.md): completed work and reopened gates;
+1. [00](00-vision-and-overview.md): end goal, component atlas and glossary.
+2. [Foundation audit](../reviews/2026-09-27-foundation-audit.md): completed work and reopened gates;
    then [16](16-lab-track-and-review-findings.md) for the review findings, lab track and the items
    only the user can unblock (16 §7); and [17](17-experience-and-motion.md) before any UI, avatar or
    audio task, because its budgets (12 §0.5) are part of every such task's Done.
-2. [12](12-feature-specification.md): normative F01–F40 scope, limits and defaults.
-3. [14](14-acceptance-and-integration.md): acceptance owners, cross-feature semantics and gates.
-4. [13](13-implementation-guide.md): exact dependency graph, toolchain, config and wire contracts.
-5. Only the design sections/ADRs named by the chosen task. [11](11-review-and-traceability.md)
-   preserves the full R1–R38 wishlist; [10](10-next-browser-extension.md) is explicitly post-v1.
+3. [12](12-feature-specification.md): normative F01–F40 scope, limits and defaults.
+4. [14](14-acceptance-and-integration.md): acceptance owners, cross-feature semantics and gates.
+5. [13](13-implementation-guide.md): exact dependency graph, toolchain, config and wire contracts.
+6. Only the design sections/ADRs named by the chosen task. [11](11-review-and-traceability.md)
+   preserves the full R1–R41 wishlist; [10](10-next-browser-extension.md) is explicitly post-v1.
 
 If an implementation uncovers a contradiction, update 12 first and its dependent design/task docs
 in the same PR. Do not silently add scope, lower a numerical target or label a blocked check passed.
@@ -208,5 +206,5 @@ CI supplements local verification; it cannot replace Wayland, acoustic, license 
 Lab units follow the same template and merge floor; they record their result as a fixture or lab
 result and never tick a task, gate or AC.
 For planning edits, run `node docs/revamp/check-plan.mjs`: it checks task dependency cycles/unknown
-references, all 114 AC assignments, R1–R38 retention and local Markdown file links. It is read-only
+references, all 114 AC assignments, R1–R41 retention and local Markdown file links. It is read-only
 and intentionally does not certify behavioral correctness or mark any task complete.

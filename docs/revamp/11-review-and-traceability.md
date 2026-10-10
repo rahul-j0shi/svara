@@ -7,7 +7,7 @@ remain open. Re-run this review at the end of every phase.
 “Covered” and “Fixed in” below mean addressed **in the design**, not built or verified. Actual
 progress and F01–F40 ownership are in the [foundation audit](../reviews/2026-09-27-foundation-audit.md).
 The completed planning handoff is [15](15-developer-handoff.md); the current per-AC ownership and
-cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R38 remain represented.
+cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R41 remain represented.
 
 ## 1. Requirements traceability
 
@@ -52,6 +52,8 @@ cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R3
 | R37 | Turn it down/off at distinct levels | 02 §3.1; 12 F03/F11/F12/F38 | 2–7 | Covered: scale, hide, mic mute, output volume/pause, disable autostart, quit, uninstall/purge |
 | R38 | Right-click access to controls and configuration | 02 §3; 12 F03 | 2 | Covered with an exhaustive native-menu order and checked state |
 | R39 | The experience is liquid smooth (2026-10-10) | 17; 12 §0.5 B1–B9; ADR-0022; 14 §3.4 X26–X30 | 2–3, 6–7 | Covered in design; measured at T2.11/T3.15, published at T7.5 |
+| R40 | The end goal is clear and research-backed (2026-10-10) | 00 §1–§1.2 | all | Covered: daily companion first, measurable outcomes with external references and a post-v1 north star |
+| R41 | A settings page to tweak the avatar's look, style and persona (2026-10-10) | 02 §6.1; 12 F08/F14/F22; 17 §2.1; 09 "After v1" | 2, 6, post-v1 | Covered: file-first editors with live preview and a size slider in v1; Avatar Studio later |
 
 ## 2. Gap log (review of the first version of this plan)
 
@@ -172,6 +174,10 @@ evidence is in [the review](../reviews/2026-10-09-engineering-review-rounds-1-5.
 | G91 | Unmeasured sentence-first latency confidence; "few hundred ms" cancellation waste (SV-04, SV-05) | Medium | 03 §3, 04 §5, 01 §5, T3.13 |
 | G92 | README claimed a `v0-prototype` tag that the remote does not have; Google STT justified by resume value | Low (credibility) | README, 04 §4, 16 §7 |
 | G93 | No plan for how interactions feel: input acknowledgement, continuity, jank, audio clicks, window flashes | High (UX) | 17, 12 §0.5, ADR-0022, 14 §3.4 |
+| G94 | No single front door: end goal scattered, no glossary for the many ID schemes, no component map answering what/why/where/how/when | High (onboarding) | 00 |
+| G95 | Per-frame animation composition unspecified (which layer owns mouth, blink, gaze, body, physics) | High | 03 §5.1; 12 §0.5 B3; T3.9; X28 |
+| G96 | Avatar size had no user-facing control; customisation paths were not summarised; no later-stage plan for friendlier tools | Medium | 02 §6.1; 12 F08; T6.2; 09 Avatar Studio |
+| G97 | Transient UI had no visual style rules | Low | 17 §2.1 |
 
 ## 3. Risk register (what can still go wrong)
 

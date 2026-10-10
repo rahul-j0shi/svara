@@ -28,7 +28,7 @@ explicit decision below.
 Wayland on both target releases remains unverified. Portal grant persistence, app activation and
 focus/clipboard behavior must not be promised until their interactive matrix passes.
 
-| Need | Decision on Ubuntu (GNOME Wayland) | To verify in Spike A |
+| Need | Decision on Ubuntu (GNOME Wayland) | Still to verify (T0.10 / G-PRESENCE, G-PLATFORM) |
 |------|-------------------------------------|----------------------|
 | **Position + always-on-top + drag** | The **avatar window runs through XWayland** (Electron forces `--ozone-platform=x11`). Mutter honours EWMH hints for X11 clients (`_NET_WM_STATE_ABOVE`, move requests, native app-region drag) | That Mutter 46 and 50 keep an XWayland window on top and at our position, and that drag works |
 | **Click-through on transparent areas** | Apply Electron `BrowserWindow.setShape()` to the avatar silhouette box, bubble and popovers. Clicks outside the native shape pass through. **No cursor polling**, which wouldn't work anyway: under XWayland the global cursor position is stale while the pointer is over Wayland-native windows | That the shape updates cleanly when the bubble appears or disappears |
@@ -252,7 +252,7 @@ validated against the pydantic JSON Schema and applied live through the kernel (
 |---------|----------|
 | **Models & accounts** | Providers list (add/remove, test connection), API keys (saved to keychain), model per role (`main`, optional `vision`), Claude effort, "Claude (your subscription)" status |
 | **Voice** | Voice input on/off, mic mute/source (echo-cancelled source recommended), STT provider, VAD sensitivity, voice output on/off, output volume/pause, TTS provider + voice + speed, preview button |
-| **Avatar looks** | Monaco editor on `avatar.json` (schema-validated) with a live preview pane; import VRM file; reset to default (see 03) |
+| **Avatar looks** | Size slider (`ui.avatar.scale`); Monaco editor on `avatar.json` (schema-validated, autocomplete) with a live preview pane; import VRM file; reset to default (see 03) |
 | **Persona** | Markdown editor for `persona.md` (name, personality, tone, do/don't) with a "test in bubble" button |
 | **Skills** | List of installed skills (toggle each), "New skill" (template `SKILL.md`), editor, import from folder |
 | **MCP servers** | Monaco editor on `mcp.json` (Claude-Desktop-compatible) + live status per server (connected, tools count, error) + per-server toggle |
@@ -261,6 +261,34 @@ validated against the pydantic JSON Schema and applied live through the kernel (
 | **Privacy** | Live data-egress table and screenshot-consent status (F34) |
 | **Shortcuts** | Add/change/remove Show/Hide, Stop and push-to-talk GNOME shortcuts; cold-start behaviour is explained |
 | **Advanced** | Core logs, latency overlay toggle, open config folder, reset settings, remove current-user Svara data and integrations |
+
+### 6.1 What you can make your own in v1, and where
+
+v1 customisation is deliberately **file-first with live preview** (R13): every setting is a
+schema-checked JSONC/Markdown file, and Configure edits that file with form controls where the value is
+simple and a code editor where it is structured. Nothing requires a restart.
+
+| You want to change… | Where | Applies |
+|---|---|---|
+| Which character (VRM model) | Configure → Avatar looks → *Import VRM* / *Reset*; licence permissions shown and enforced (F14) | ~1 s cross-fade after the new model is ready |
+| Size | Configure → Avatar looks → size slider (0.5–2.0) | Immediately, animated (12 §0.5 B5) |
+| Colours, visible meshes, framing (bust/full), hair/cloth physics | Avatar looks editor (`materials`, `meshes`, `framing`, `springBones`) with live preview | ≤ 1 s (F14 AC1) |
+| How alive it looks: expression intensity, blink, gaze follow, breathing, sway, idle clips | Avatar looks editor (`face`, `idle`) | Live |
+| Gestures | `avatar.json` `gestures` → `.vrma` files (file-only, F16) | Next gesture cue |
+| Mouth tuning: profile, jaw gain, attack/release, lookahead | Avatar looks editor (`lipsync`); tune with the lip-sync lab (F18) | Next sentence |
+| Who it is: name, personality, tone, language rule | Configure → Persona (`persona.md`) + *Test in bubble* (F22) | Next turn |
+| Its voice: provider, voice, speed, volume, preview | Configure → Voice (F12); persona frontmatter can override the voice | Next sentence |
+| How it answers: speak + bubble / bubble / speak | Right-click → Response mode (F11) | Next turn |
+| Bubble timing | Configure → Advanced (`ui.bubbleHideAfterSec`) | Next bubble |
+| Expressions, gestures, sentiment fallback, lip sync on/off | Configure → Features (F30) | Live |
+| Motion amount | The OS *reduce motion* setting (12 §0.5 B9) | Live |
+| Placement, workspaces, hide | Drag; right-click menu (F02/F03) | Live |
+| Brain and skills: model, provider, skills, MCP, permissions | Models & accounts, Skills, MCP servers, Permissions (F19/F24/F28/F29) | Next turn |
+
+**Later — Avatar Studio (post-v1, 09 "After v1").** Friendlier tools that write the same files:
+form controls (colour pickers and sliders over `avatar.json`), a voice gallery with previews, look
+presets, switchable characters (persona + voice + look), then the inventory/publishing work in 03 §2. Each needs its
+own scoped proposal; none is a v1 requirement (12 §0.2).
 
 ## 7. Frontend structure
 

@@ -4,6 +4,15 @@ Svara is being rebuilt as an Ubuntu-native, voice-first desktop assistant with a
 Its name comes from **svara** (स्वर): voice, tone, musical note, and vowel—the same unit at the heart
 of its speech and lip-sync pipeline.
 
+## What it is for
+
+A small, always-present voice companion for the Ubuntu desktop: you talk to it like a person, it
+answers out loud with a face that visibly speaks, it acts on your computer only as far as you allow,
+and it works with the AI provider you choose — including fully local. Idle, it is a calm character in
+the corner that never steals focus; in use, it should feel immediate and liquid smooth. Its look,
+voice and persona are yours to change. The measurable version of this goal, with external references
+for each target, is in [00 — Vision and overview](docs/revamp/00-vision-and-overview.md).
+
 ## Where the project stands
 
 Implementation is in **Phase 0**. There is no assistant runtime, CLI, tray or settings window yet;
@@ -33,7 +42,8 @@ corpus/rig/device outcome, and only the integrated acceptance checks accept a pr
   [12 — Feature specification](docs/revamp/12-feature-specification.md); the ordered backlog is
   [13 — Implementation guide](docs/revamp/13-implementation-guide.md); acceptance owners and gates
   are in [14](docs/revamp/14-acceptance-and-integration.md).
-- **Start here:** [15 — Developer handoff](docs/revamp/15-developer-handoff.md), then
+- **Start here:** [00 — Vision and overview](docs/revamp/00-vision-and-overview.md) (end goal,
+  component map, glossary), then [15 — Developer handoff](docs/revamp/15-developer-handoff.md) and
   [16 — Lab track & review findings](docs/revamp/16-lab-track-and-review-findings.md).
 - [17 — Experience & motion](docs/revamp/17-experience-and-motion.md) — the liquid-smooth UX
   contract: 100 ms input acknowledgement, continuous interruptible motion, jank and long-task limits,

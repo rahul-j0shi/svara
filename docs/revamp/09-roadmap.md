@@ -7,9 +7,9 @@ sync quality, Python wheel support) are proven first.
 
 ## Portfolio-ready milestone
 
-The plan is ordered by sequence and scope only, with no dates or durations. **Because this is for a job
-search, there is an earlier cut: "v0.5 — portfolio preview"** at the end
-of Phase 4a (read-only tools):
+The plan is ordered by sequence and scope only, with no dates or durations. The end goal is a daily
+companion (00 §1); a public, demonstrable cut also matters, so there is an earlier milestone,
+**"v0.5 — portfolio preview"**, at the end of Phase 4a (read-only tools):
 
 - Floating avatar, drag, context menu, bubble, conversations
 - Voice in/out with the full lip-sync engine and the lip-sync lab
@@ -296,8 +296,15 @@ Tasks
 1. **Browser extension** (see 10).
 2. More platforms: native Wayland (dropping XWayland once GNOME offers what we need), other
    distros/desktops (KDE supports layer-shell), then macOS and Windows behind the same interfaces.
-3. Avatar inventory: item packages, then publish/share.
-4. Wake word, multiple personas, long-term memory (summaries in SQLite + retrieval).
+3. **Avatar Studio**, in bounded steps that write the same files v1 uses (order decided 2026-10-10):
+   (a) **form controls** — colour pickers, sliders and toggles over `avatar.json` with live preview;
+   the largest daily-use gain, built on the v1 editor and schema; (b) **voice gallery** with previews —
+   cheap, because `voice.voices`/`voice.preview` already exist (13 §7.4); (c) **look presets** — saved
+   `avatar.json` fragments, which need (a) first; (d) **characters** — persona templates and switchable
+   personas (12 §0.2), each bundling persona + voice + look preset, so it needs (b) and (c);
+   (e) **inventory**: item packages, then publish/share (03 §2) — last, because it adds a package
+   format, licence and trust questions. Each step is a separate scoped proposal with its own ACs.
+4. Wake word, long-term memory (summaries in SQLite + retrieval).
 5. MCP resources/prompts, remote MCP OAuth.
 6. Speech-to-speech realtime pipeline plugin.
 7. Free-threaded Python build once all native deps support it.

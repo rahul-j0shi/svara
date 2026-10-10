@@ -14,7 +14,7 @@ are owned in [16](16-lab-track-and-review-findings.md). Nothing was relaxed.
 
 - **User decision:** remove Coqui from v1. Keep local Kokoro and cloud ElevenLabs, Azure and OpenAI
   TTS. No extra local service, PyTorch dependency or automatic runtime installation.
-- Keep all R1–R38 wishlist items and all F01–F40 features otherwise. Desktop idle is **only the
+- Keep all R1–R41 wishlist items and all F01–F40 features otherwise. Desktop idle is **only the
   character**, never a dashboard, terminal, permanent dialog or metrics panel. Debug/lab surfaces
   are opt-in and separate; production build checks must prove the spike page is excluded.
 - The keyboard Talk action toggles one utterance; it is not a key-held microphone. All three
@@ -162,7 +162,7 @@ check is replayed at the last integration owner under real workloads; an isolate
 |---|---|---|
 | **X26** Input acknowledgement and drag | B1, B4: double-click, menu, Type, approval buttons, hover; grab/move/release on 100/200% scaling | T2.3, T2.8; replay T2.11, T3.15 |
 | **X27** Frame consistency and blocking | B2, B3: idle, hover, drag, speaking and transitions; long tasks; 30↔60 fps switches without speed change; quality-ladder step down/up logged | T2.5; replay T2.11, T3.15 |
-| **X28** Continuity of transitions | B5, B8, B9: every F04 state pair, interrupted mid-transition (barge-in, Stop, new input, hide), bubble resize/flip, scale change, reduced motion | T2.6, T2.8, T6.6; replay T2.11, T3.15 |
+| **X28** Continuity of transitions | B5, B8, B9 and the layer-ownership rules of 03 §5.1: every F04 state pair, interrupted mid-transition (barge-in, Stop, new input, hide), bubble resize/flip, scale change, reduced motion | T2.6, T2.8, T3.9, T6.6; replay T2.11, T3.15 |
 | **X29** Window first paint | B7: avatar launch and show-after-hide, Conversations/Configure cold and warm, light and dark OS theme | T2.3, T2.9, T2.10; replay T2.11 |
 | **X30** Audio smoothness and sync together | B6 plus F05 AC2/F15 AC2 under one run: start/stop/pause/duck/volume ramps, sentence gaps, bubble/mouth/voice alignment | T3.8, T3.10; replay T3.15 |
 

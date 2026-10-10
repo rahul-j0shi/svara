@@ -98,13 +98,13 @@ for (const file of markdownFiles) {
 const requirements = new Set(
   [...read("11-review-and-traceability.md").matchAll(/^\| R(\d+) \|/gm)].map((m) => Number(m[1])),
 );
-for (let i = 1; i <= 38; i++) check(requirements.has(i), `Missing wishlist requirement R${i}`);
+for (let i = 1; i <= 41; i++) check(requirements.has(i), `Missing wishlist requirement R${i}`);
 
 if (failures.length) {
   for (const failure of new Set(failures)) console.error(failure);
   process.exitCode = 1;
 } else {
   console.log(`${tasks.size} tasks: explicit dependencies, no cycles or unknown references.`);
-  console.log(`40 features / ${total} ACs mapped; R1–R38 retained; local Markdown file links resolve.`);
+  console.log(`40 features / ${total} ACs mapped; R1–R41 retained; local Markdown file links resolve.`);
   console.log("Structural validation only: this does not certify design correctness or product acceptance.");
 }

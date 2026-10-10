@@ -36,6 +36,22 @@ easings take clock time `dt`; an interrupted animation retargets from current va
 exits are slightly faster than entries. **Reduced motion** (`prefers-reduced-motion`): sway, bounce
 and spring overshoot off; movement becomes ≤150 ms opacity changes; blink and lip sync stay (F02).
 
+### 2.1 Visual style of the transient UI
+
+The character is the product; everything else is quiet, small and native-feeling.
+
+- **Typography:** the system UI font (`system-ui`, Ubuntu on Ubuntu) at the OS text scale; bubble body
+  15 px at scale 1.0, line height 1.4; no custom web fonts to load.
+- **Colour:** follow the OS light/dark preference and accent colour; bubbles are a near-opaque
+  surface with a soft shadow so text stays readable over any wallpaper; text meets WCAG AA contrast.
+- **Shape:** rounded bubble (12 px radius) with a tail toward the avatar's head, flipping with
+  placement (F05); chips are pill-shaped single lines; approval buttons are standard-height with a
+  clear primary (*Allow once*) and a visually distinct *Deny*.
+- **Density:** at most the F05 limits (8 lines, 5 list items); no icons except state glyphs (mic,
+  tool, warning) drawn as inline SVG so they scale cleanly at 100/200%.
+- **Separate windows** (Configure, Conversations) use the same tokens with ordinary window chrome;
+  themes beyond the OS setting are out of scope (12 §0.2).
+
 ## 3. Moment-by-moment choreography
 
 | Moment | What the user perceives | Mechanism |
@@ -68,6 +84,10 @@ interval; the character keeps idle-layer motion under the thinking pose. The des
 fake audio or filler speech to mask latency; real latency is reduced and measured (T3.13).
 
 ## 5. Rendering and process rules
+
+How the character's layers (idle, state pose, gesture, gaze, emotion, blink, mouth, physics) are
+owned and composed each frame is specified in [03 §5.1](03-avatar-and-lipsync.md#51-the-per-frame-animation-stack-how-the-avatar-moves);
+the rules below keep that loop fed and unblocked.
 
 - **Off the animation path:** VRM fetch/parse/optimise, `decodeAudioData`, protocol JSON for large
   payloads, Markdown sanitising and settings editors. Use workers, chunked work or the separate
@@ -108,6 +128,7 @@ the numbers. Results publish with the latency table (T7.5).
 | Drag, hide/show, first-frame mapping, focus reveal | T2.3 | X26, X29 |
 | Idle layer, `dt` animation, fps elevation, quality ladder | T2.5 | X27 |
 | State poses and interruptible transitions | T2.6 | X28 |
+| Gesture, emotion, blink, gaze and mouth layering (03 §5.1) | T3.9 | X27, X28 |
 | Bubble/type box/chip motion and layout stability | T2.8 | X28 |
 | Window first paint (Conversations, Configure) | T2.9, T2.10 | X29 |
 | Text-desktop integration of all of the above | T2.11 | X26–X29 |

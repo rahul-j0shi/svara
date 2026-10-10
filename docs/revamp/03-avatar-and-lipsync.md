@@ -25,10 +25,10 @@ qualification. No "drop in a JSON file" claim is made.
 **Renderer:** three.js + `@pixiv/three-vrm`, because it is the reference VRM runtime and actively
 maintained. Babylon.js has only community VRM loaders. (Resume note: this replaces "Babylon.js".)
 
-**Default avatar (decided 2026-10-10, ADR-0007): one exact, licence-verified free VRM.** An
-earlier version of this plan said the VRoid Studio presets (`VRoidPreset_A` … `Z`) are CC0. Their
-[official terms](https://vroid.pixiv.help/hc/en-us/articles/4402394424089-VRoidPreset-A-Z) say they
-are **not** CC0 (engineering review SV-01). Some VRoid models are designated CC0, for example
+**Default avatar (ADR-0007): one exact, licence-verified free VRM.** The VRoid Studio presets
+(`VRoidPreset_A` … `Z`) are **not** CC0 according to their
+[official terms](https://vroid.pixiv.help/hc/en-us/articles/4402394424089-VRoidPreset-A-Z) (an earlier
+plan wrongly said they were; SV-01). Some VRoid models are designated CC0, for example
 [β AvatarSample_1](https://vroid.pixiv.help/hc/en-us/articles/360012381793-%CE%B2-Ver-AvatarSample-1).
 T0.12 selects in this order, re-checking the publisher's page on the day:
 
@@ -378,6 +378,42 @@ class PerformancePlayer {
   `vrm.expressionManager.setValue()` and then `vrm.update(dt)`.
 - Everything is testable without WebGL: `PerformancePlayer.update` is pure given a time, so we can
   write vitest golden tests ("at t=120 ms the PP channel is ≥ 0.9").
+
+### 5.1 The per-frame animation stack (how the avatar moves)
+
+Several systems want to move the same character: idle breathing, state poses, gestures, gaze,
+emotions, blinking, the mouth and physics. Each **channel has exactly one owner**; other layers can
+only add on top of it or be reduced by it, never overwrite it. This is what keeps motion continuous
+(ADR-0022) and stops the closure-style "three layers fighting" bug from reappearing elsewhere.
+
+| Layer (low → high) | Owns | Source | Blending |
+|---|---|---|---|
+| 1. Idle body | Spine, chest, shoulders, arms at rest | Procedural breathing/sway; optional idle `.vrma` clips | Base pose; `dt`-driven; off when reduced motion asks |
+| 2. State pose | Additive head/neck/spine offsets per F04 state | Table of state → target pose (listening tilt, thinking, acting loop) | `pose` spring retargets from current pose when the state changes |
+| 3. Gesture | Arm/hand bones (and an additive head nod) while active | One `.vrma` clip at a time via three.js `AnimationMixer` (F16) | 200 ms weight fade in/out; a new gesture waits for the current one |
+| 4. Gaze | Eyes and limited head yaw/pitch | VRM look-at: camera, or cursor while over the window (03 §4.5); idle saccades; state targets (thinking looks up-left) | Target changes are springs; saccades are short jumps by design |
+| 5a. Emotion | Non-mouth parts of `happy angry sad relaxed surprised` | Cue scheduler and sentiment fallback (F16) | `expression` spring; 400 ms back to neutral |
+| 5b. Blink | `blink*` | Idle layer (F17) | Suppressed while an active expression declares `overrideBlink` |
+| 5c. Mouth | `aa ee ih oh ou` (and extended shapes if present) | **Only** `PerformancePlayer` → linear retarget (ADR-0018) | Emotion mouth parts are reduced while a strong viseme is active (§4.3 step 5); `overrideMouth` from the rig report is honoured |
+| 6. Physics | Spring bones (hair, cloth) | `vrm.update(dt)` | Runs after every bone write, once per frame |
+
+**Order inside one rendered frame** (the limiter decides whether to render, ADR-0020):
+
+1. Sample clocks: `dt` from `performance.now()` (clamped to 100 ms after a stall so springs never
+   explode) and the audio output position (ADR-0017).
+2. `PerformancePlayer.update(audioTime)` → final mouth weights and jaw.
+3. Cue scheduler → emotion and gesture targets that are due.
+4. Idle, state-pose and gaze layers advance by `dt`; `AnimationMixer.update(dt)` for clips.
+5. Compose the face: emotion ⊕ blink ⊕ mouth under the ownership rules above → one
+   `expressionManager.setValue()` per expression.
+6. Look-at update, then `vrm.update(dt)` (expressions applied, spring bones simulated).
+7. `renderer.render()`.
+
+Steps 2–6 must fit the per-frame budget (≤ 10 ms of script at 60 fps, player ≤ 1 ms; 12 §0.5 B3) with
+no per-frame allocation. The compose step (5) is a pure function, so its final weights are tested
+with goldens without WebGL — the same rule as the mouth (§4.3). Hidden means no frames; on restore,
+`dt` restarts at zero and audio-driven layers sample the current audio time, so nothing replays or
+jumps (14 §3.1).
 
 ## 6. Lip-sync lab (dev tool and portfolio piece)
 
