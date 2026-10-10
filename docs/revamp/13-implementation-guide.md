@@ -168,6 +168,9 @@ running the core test suite in an `ubuntu:26.04` container. No GPU and no GUI te
   types.
 - `packages/avatar` is pure TS + three; the lint rule forbids imports of `react` and `electron`
   there.
+- Motion uses the shared duration/easing/spring tokens from one module (17 §2); animation advances
+  by clock time, never frame count; DOM UI animates only `opacity`/`transform`; no per-frame
+  allocation in the player/renderer hot path; no synchronous IPC from any renderer (ADR-0022).
 
 **Tests**
 - `unit/` is fast and pure.
@@ -211,6 +214,7 @@ T0.4, and the rest by the spikes.
 | 0019 | Own async operations by intent: avatar loads, focus desired state, native job slots (01 §5) | Accepted |
 | 0020 | Phase-preserving frame pacing and honest deficit metrics (12 F02) | Accepted |
 | 0021 | Bounded lab track; fixture / lab / product acceptance levels (16) | Accepted |
+| 0022 | Liquid-smooth experience contract: budgets B1–B9, continuity, `dt` animation, unblocked render loop (17, 12 §0.5) | Accepted |
 
 **Template**
 
@@ -519,15 +523,15 @@ tests pass.
 |----|------|-----------|------------|-----------|
 | T2.1 | Shell lifecycle, single instance, CLI action dispatch/cold settings updates, autostart, crash recovery, cleanup | F01 AC1/3/4/5/7; Talk dispatch harness | T1.14 | Lifecycle ACs pass; real Talk AC2/6 deferred explicitly to T3.15 |
 | T2.2 | Frontend core-client (typed WS, reconnect, binary frames) + store | F40 client side | T1.14 | Reconnect test with a killed core |
-| T2.3 | Production window geometry/input/focus/hide/restore and avatar-only entry point; no spike UI | F02 AC1–5/7/8; CPU integration later | T2.1, T2.2 | Isolated geometry/focus/screenshot tests pass; focus desired-state schedules (open→close before/during/after helper, toggles, failure, disposal, bad sender) pass (ADR-0019); renderer integrated at T2.11 |
+| T2.3 | Production window geometry/input/focus/hide/restore and avatar-only entry point; no spike UI | F02 AC1–5/7/8; CPU integration later | T2.1, T2.2 | Isolated geometry/focus/screenshot tests pass; focus desired-state schedules (open→close before/during/after helper, toggles, failure, disposal, bad sender) pass (ADR-0019); avatar maps after its first frame and hide/show/drag meet B4/B7 (X26/X29); renderer integrated at T2.11 |
 | T2.4 | `packages/avatar`: VRM + VRMA load via `/assets`, framing, `avatar.json` apply in place | F14 (AC1 load path) | T1.14, T0.12 | Standalone package harness passes; no dependency on production window; colour update ≤1 s; selection-intent ownership and prepare/commit/rollback schedules pass (SV-18–20, ADR-0019); existing in-loader and disposal fences kept |
-| T2.5 | Idle behaviour | F17 | T2.4 | CPU limit met; blink distribution test; phase-preserving limiter and deficit metrics pass virtual 50–240 Hz schedules (ADR-0020) |
-| T2.6 | State visuals (booting, idle, thinking, error) | F04 (AC1 partial) | T2.4 | Visual within 100 ms |
+| T2.5 | Idle behaviour | F17 | T2.4 | CPU limit met; blink distribution test; phase-preserving limiter and deficit metrics pass virtual 50–240 Hz schedules (ADR-0020); fps elevation during motion, `dt` animation and the quality ladder pass X27 |
+| T2.6 | State visuals (booting, idle, thinking, error) | F04 (AC1 partial) | T2.4 | Visual within 100 ms; every state pair blends with `pose`/`expression` tokens and retargets when interrupted mid-transition (X28) |
 | T2.7 | Native menu/tray, checked config state, hide/restore/Quit; Show/Hide shortcut | F03 text-ready subset, F02 | T2.3 | Text/recovery checks pass; voice actions pending with explanation until T3.15; Stop integration at T4.15 |
-| T2.8 | Bubble (cleaned text/tag stripping, truncation, auto-hide, placement) + type box | F05 (AC1, AC3), F06 (AC1–3) | T2.3, T2.9 | ACs pass; share pure tag parser with later T3.5, not a second parser |
-| T2.9 | Conversations window | F07 (AC1–4) | T2.2 | ACs pass |
-| T2.10 | Configure shell + Models & accounts, Persona and Shortcuts (Show/Hide now) sections; comment-preserving edits; stale-write rejection | F08 (AC1–3, those sections), F19 UI | T2.2, T2.7 | ACs pass; Show/Hide shortcut can be added/removed |
-| T2.11 | Text desktop integration and phase exit | F01–F08 text portions, F14/F17; X18/X20 | T2.5, T2.6, T2.7, T2.8, T2.9, T2.10 | Actual avatar-only build, idle budget (with refresh rate and deficit recorded), all text controls, focus/drag/workspace and crash/reconnect pass locally |
+| T2.8 | Bubble (cleaned text/tag stripping, truncation, auto-hide, placement) + type box | F05 (AC1, AC3), F06 (AC1–3) | T2.3, T2.9 | ACs pass; share pure tag parser with later T3.5, not a second parser; bubble/type box/chip motion and layout stability (B8) and input acknowledgement (X26) pass |
+| T2.9 | Conversations window | F07 (AC1–4) | T2.2 | ACs pass; themed first frame without flash (X29) |
+| T2.10 | Configure shell + Models & accounts, Persona and Shortcuts (Show/Hide now) sections; comment-preserving edits; stale-write rejection | F08 (AC1–3, those sections), F19 UI | T2.2, T2.7 | ACs pass; Show/Hide shortcut can be added/removed; themed first frame without flash, editors lazy-loaded (X29) |
+| T2.11 | Text desktop integration and phase exit | F01–F08 text portions, F14/F17; X18/X20 | T2.5, T2.6, T2.7, T2.8, T2.9, T2.10 | Actual avatar-only build, idle budget (with refresh rate and deficit recorded), all text controls, focus/drag/workspace and crash/reconnect pass locally; X26–X29 pass on the real avatar build |
 
 ### Phase 3 — Voice + performance
 
@@ -540,14 +544,14 @@ tests pass.
 | T3.5 | Segmenter: sentence rules, first-sentence rule, normalisation, shared tag extraction, reasoning/code skipping | F12 (AC3), F16 (AC2), 04 §2 | T2.11 | Unit tests |
 | T3.6 | TTS port + `kokoro` runner + `elevenlabs` + contract suite (incl. alignment tier) | F12 (AC1) | T3.1, T0.8 | ACs pass; contract suite checks literal stdin G2P (`--help`/leading-dash text), declared inventory with no silent `sil`, frame-count extent, and model-slot ownership through native exit under repeated cancel/replace (ADR-0017/0018/0019) |
 | T3.7 | Performance engine: espeak G2P, IPA→viseme table, tiers A/B/D, shape rules, envelope | F15 (AC1) | T3.5, T3.6 | Independently annotated bilabial test passes; generator owns timing only, keys stay in extent, envelope from played PCM with per-voice calibration, unknown phones counted (ADR-0017/0018) |
-| T3.8 | `PerformancePlayer` + retarget maps + gapless scheduling on one AudioContext + autoplay unlock | F15 (AC2–3), F12 (AC2) | T3.7, T2.4 | ACs pass; player is the single articulation owner and final rig-weight regressions (PP/FF→vowel, short closure, overlap, end) pass; mismatched segments rejected before playback; output-clock sampling with recorded fallback (ADR-0017/0018) |
+| T3.8 | `PerformancePlayer` + retarget maps + gapless scheduling on one AudioContext + autoplay unlock | F15 (AC2–3), F12 (AC2) | T3.7, T2.4 | ACs pass; player is the single articulation owner and final rig-weight regressions (PP/FF→vowel, short closure, overlap, end) pass; mismatched segments rejected before playback; output-clock sampling with recorded fallback (ADR-0017/0018); playback start/stop ramps (X30) |
 | T3.9 | Expressions & gestures + sentiment fallback | F16 (AC1–3) | T3.8 | ACs pass |
-| T3.10 | Response modes + bubble speech sync + pause voice + live output volume; minimal Voice controls and preview | F11, F12, F05 (AC2) | T3.8, T3.9 | ACs pass; usable Voice settings now, final polish at T6.1 |
+| T3.10 | Response modes + bubble speech sync + pause voice + live output volume; minimal Voice controls and preview | F11, F12, F05 (AC2) | T3.8, T3.9 | ACs pass; usable Voice settings now, final polish at T6.1; all gain changes ramp without clicks (X30) |
 | T3.11 | Barge-in + PipeWire echo-cancel setup/remove UI + duck-and-gate fallback | F13 (AC1–3) | T3.3, T3.10 | ACs pass with speakers |
 | T3.12 | Lip-sync lab + golden export/load | F18 | T3.8 | A lab export passes as a golden; reviewed landmark annotations and graph/output clock shown; lab-track corpus and evidence (16 §4) imported, not re-invented |
 | T3.13 | Latency metrics + overlay | F36 (overlay) | T3.8 | p50/p95 shown; 04 §5 targets measured and recorded as first audible output (cold/warm), total generation and gaps separately; a miss goes to the user with measured options |
 | T3.14 | `--demo` voice path (fake STT/TTS with Tier A timings) | F37 (AC1–2) | T3.8 | CI demo turn includes a performance |
-| T3.15 | Voice integration/phase exit; Talk shortcut; first-use/download/offline UX | F01 AC2/6, F03/F04 voice, F09/F13/F20/F33/F40; X01/X02/X04/X07 | T3.4, T3.9, T3.10, T3.11, T3.12, T3.13, T3.14 | Real complete spoken turn, modes, interruption, model lifecycle, local latency and mic privacy pass; fixtures are not an acoustic pass |
+| T3.15 | Voice integration/phase exit; Talk shortcut; first-use/download/offline UX | F01 AC2/6, F03/F04 voice, F09/F13/F20/F33/F40; X01/X02/X04/X07 | T3.4, T3.9, T3.10, T3.11, T3.12, T3.13, T3.14 | Real complete spoken turn, modes, interruption, model lifecycle, local latency and mic privacy pass; X26–X30 replayed under a real voice turn; fixtures are not an acoustic pass |
 
 ### Phase 4 — Tools, permissions, safety (v0.5 cut after T4.10)
 
@@ -594,7 +598,7 @@ the registry and permission engine; its ID does not imply execution before them.
 | T6.3 | First-run onboarding | F35 | T6.1 | AC on a clean 24.04 VM |
 | T6.4 | Retention, clear history, settings export/import (before preview) | F32 (AC2), F08 | T3.15, T2.10 | ACs and X15 safe archive/retention tests pass |
 | T6.5 | Diagnostics bundle | F36 (AC) | T5.5, T1.5 | No secrets in the bundle |
-| T6.6 | Complete shortcuts/cold start, autostart UI, reduced motion, multi-monitor (before preview) | F09, F01, F02 | T4.7, T2.10 | Manual lifecycle/control matrix passes |
+| T6.6 | Complete shortcuts/cold start, autostart UI, reduced motion, multi-monitor (before preview) | F09, F01, F02 | T4.7, T2.10 | Manual lifecycle/control matrix passes; reduced-motion and scale/monitor transitions meet B5/B9 (X28) |
 | T6.7 | Error-UX pass: every 04 §4a and F-feature error path shows its specified message | 12 (all Errors sections), X22 | T6.3 | Per-feature error checklist passes; no silent skipped paths |
 
 ### Phase 7 — Ship v1
@@ -605,6 +609,6 @@ the registry and permission engine; its ID does not imply execution before them.
 | T7.2 | Licence review, generated `THIRD_PARTY_NOTICES.md` | F38, 03 §4.7 | T7.1 | Every bundled dependency listed with its licence |
 | T7.3 | Clean-VM smoke on 24.04 and 26.04, upgrade/rollback/removal | F38 (AC), X21 | T7.2 | AC passes |
 | T7.4 | README final (demo video, architecture, lip-sync lab section, latency table, permissions, roadmap with the extension "next"), optional static web demo of `packages/avatar` | 09 Phase 7 | T7.3 | Review checklist |
-| T7.5 | Publish the measurements (installer size, idle RAM/CPU, model RAM, cold start, latency p50/p95) | 09 Phase 7 | T7.3 | Table in the README |
+| T7.5 | Publish the measurements (installer size, idle RAM/CPU, model RAM, cold start, latency p50/p95, smoothness B1–B4 distributions) | 09 Phase 7 | T7.3 | Table in the README |
 | T7.6 | Finalise the resume bullets from what shipped | README decision | T7.4 | Bullets match the repo |
 | T7.7 | Final v1 acceptance; tag/release with checksums only after explicit publication approval | 12 v1 DoD | T7.1, T7.2, T7.3, T7.4, T7.5, T7.6 | Every F01–F40 AC and cross-feature regression passes; policy/licensing gates clear; otherwise report local candidate, not released |

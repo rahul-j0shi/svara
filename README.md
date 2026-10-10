@@ -35,6 +35,9 @@ corpus/rig/device outcome, and only the integrated acceptance checks accept a pr
   are in [14](docs/revamp/14-acceptance-and-integration.md).
 - **Start here:** [15 — Developer handoff](docs/revamp/15-developer-handoff.md), then
   [16 — Lab track & review findings](docs/revamp/16-lab-track-and-review-findings.md).
+- [17 — Experience & motion](docs/revamp/17-experience-and-motion.md) — the liquid-smooth UX
+  contract: 100 ms input acknowledgement, continuous interruptible motion, jank and long-task limits,
+  click-free audio and flash-free windows (budgets in 12 §0.5).
 - [`docs/adr/`](docs/adr/README.md) — architecture decisions (accepted decisions, not passed tests).
 - [`docs/spikes/`](docs/spikes/) and [`docs/reviews/`](docs/reviews/) — evidence and reviews.
 

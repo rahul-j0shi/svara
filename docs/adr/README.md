@@ -30,6 +30,7 @@ a passed feature test; implementation status lives in the
 | [0019](0019-own-asynchronous-operations-by-intent.md) | Own asynchronous operations by intent, from start to final effect | Accepted |
 | [0020](0020-pace-frames-by-target-phase-and-report-deficits.md) | Pace frames by target phase and report deficits honestly | Accepted |
 | [0021](0021-run-a-bounded-lab-track-with-separate-acceptance-levels.md) | Run a bounded speech/avatar lab track with separate acceptance levels | Accepted |
+| [0022](0022-hold-a-liquid-smooth-experience-contract.md) | Hold a liquid-smooth experience contract across every surface | Accepted |
 
 ADRs 0017–0021 record the decisions taken from the
 [engineering review, rounds 1–5](../reviews/2026-10-09-engineering-review-rounds-1-5.md); the

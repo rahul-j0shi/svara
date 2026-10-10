@@ -140,7 +140,9 @@ request; they are never embedded beside the avatar.
 
 - **Default position:** bottom-right of the primary monitor's *work area* (excluding the GNOME top
   bar and the Ubuntu dock), with a 16 px margin.
-- **Drag:** `pointerdown` + move > 4 px → the selected Electron native drag/position bridge. On drop, save `{monitor id,
+- **Drag:** `pointerdown` + move > 4 px → the selected Electron native drag/position bridge. The grab
+  offset is kept so the character does not jump, and it tracks the pointer within two display frames
+  at 60 fps (12 §0.5 B4). On drop, save `{monitor id,
   x, y}` to `config.ui.avatar.position`. If that monitor is gone at next launch, fall back to the
   default.
 - **Click vs double-click vs drag** are told apart by a small gesture recogniser (distance and time
@@ -289,9 +291,11 @@ translation is possible later) and light/dark themes beyond following the OS.
 
 ## 8. Accessibility & polish
 
-These are cheap to do and they show in a portfolio:
+How every interaction must *feel* — motion tokens, choreography for each moment, input and frame
+budgets, audio ramps and window first paint — is the liquid-smooth contract in
+[17](17-experience-and-motion.md) (ADR-0022, budgets in 12 §0.5). The items below are part of it:
 
-- Respect `prefers-reduced-motion` (reduce idle sway, no bounce).
+- Respect `prefers-reduced-motion` (reduce idle sway, no bounce; movement becomes short fades, B9).
 - Captions: the bubble is also the caption track when voice output is on.
 - Keyboard: menus and Configure are keyboard-navigable when focused. Global bindings are only
   Show/Hide, Stop and push-to-talk (F01/F09/F27), opt-in and rebindable.

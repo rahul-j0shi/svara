@@ -84,3 +84,23 @@ task graph still has 89 tasks; 40 features / 114 ACs remain mapped.
 - Every ADR/doc link added here was checked to resolve to a file in the repository.
 - No GUI, Wayland, microphone, provider, model or code test was run; none was needed for a
   documentation change, and none is claimed.
+
+## 6. Addendum — liquid-smooth experience contract (same day)
+
+Follow-up request: the plan had functional UX (avatar-only surface, state visuals ≤100 ms, bubble
+timing, 30/60 fps) but no definition of how interactions must *feel*. Added, without changing any
+feature, AC, task dependency or existing limit:
+
+- [ADR-0022](../adr/0022-hold-a-liquid-smooth-experience-contract.md) and
+  [17 — Experience & motion](../revamp/17-experience-and-motion.md): principles, one motion
+  vocabulary, choreography for every moment, perceived-latency timeline, render/audio rules,
+  measurement and owners.
+- 12 §0.5 global budgets B1–B9 (input acknowledgement, frame consistency, long tasks, drag, transitions,
+  audio ramps, window first paint, layout stability, reduced motion); F02 renders 60 fps during any
+  motion.
+- 14 §3.4 checks X26–X30 with owners and a smoothness measurement protocol in §5; 13 conventions and
+  "Done when" for T2.3/T2.5/T2.6/T2.8/T2.9/T2.10/T2.11/T3.8/T3.10/T3.15/T6.6/T7.5; R39/G93 and a
+  risk in 11; lab V-E.2 records frame-time and long tasks; 02, 03, 09, 15, READMEs cross-referenced.
+
+Deliberately excluded: earcons, custom menus, fake typing/thinking delays and filler speech, skeleton
+screens. The quality ladder is a logged mitigation, never a budget pass.

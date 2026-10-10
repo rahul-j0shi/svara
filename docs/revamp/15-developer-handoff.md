@@ -35,7 +35,8 @@ An unrelated untracked `:memory:.ses` may exist; leave it untouched and out of t
 
 1. [Foundation audit](../reviews/2026-09-27-foundation-audit.md): completed work and reopened gates;
    then [16](16-lab-track-and-review-findings.md) for the review findings, lab track and the items
-   only the user can unblock (16 §7).
+   only the user can unblock (16 §7); and [17](17-experience-and-motion.md) before any UI, avatar or
+   audio task, because its budgets (12 §0.5) are part of every such task's Done.
 2. [12](12-feature-specification.md): normative F01–F40 scope, limits and defaults.
 3. [14](14-acceptance-and-integration.md): acceptance owners, cross-feature semantics and gates.
 4. [13](13-implementation-guide.md): exact dependency graph, toolchain, config and wire contracts.

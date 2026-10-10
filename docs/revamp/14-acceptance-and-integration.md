@@ -6,7 +6,8 @@ No F01–F40 feature is accepted yet. Nothing here waives the open platform, acc
 gates. [12](12-feature-specification.md) controls product scope; [13](13-implementation-guide.md)
 controls task dependencies. This document assigns tests and resolves their integration boundaries.
 The 2026-10-10 adoption of the [engineering review](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
-adds regressions X23–X25 and measurement rules below; findings SV-01–SV-24 and the bounded lab track
+adds regressions X23–X25 and measurement rules below; the experience contract (ADR-0022) adds
+X26–X30 in §3.4; findings SV-01–SV-24 and the bounded lab track
 are owned in [16](16-lab-track-and-review-findings.md). Nothing was relaxed.
 
 ## 1. Decisions and scope
@@ -151,6 +152,23 @@ extent/pairing/key-range rejection and native slot ownership under repeated canc
 Tests: T1.6/T2.1 **X13** (IPC/transport/roles/assets), T3.1 **X14** (download lifecycle), T6.4 **X15**
 (safe import/export/retention), T1.5/T6.5 **X16** (redaction), T0.11/T7.3 **X17** (owned data cleanup).
 
+### 3.4 Experience quality
+
+The global budgets B1–B9 in [12 §0.5](12-feature-specification.md#05-experience-quality-global) are
+verified across features, not per AC (design: [17](17-experience-and-motion.md), ADR-0022). Each
+check is replayed at the last integration owner under real workloads; an isolated pass is not final.
+
+| Check | Covers | Owners |
+|---|---|---|
+| **X26** Input acknowledgement and drag | B1, B4: double-click, menu, Type, approval buttons, hover; grab/move/release on 100/200% scaling | T2.3, T2.8; replay T2.11, T3.15 |
+| **X27** Frame consistency and blocking | B2, B3: idle, hover, drag, speaking and transitions; long tasks; 30↔60 fps switches without speed change; quality-ladder step down/up logged | T2.5; replay T2.11, T3.15 |
+| **X28** Continuity of transitions | B5, B8, B9: every F04 state pair, interrupted mid-transition (barge-in, Stop, new input, hide), bubble resize/flip, scale change, reduced motion | T2.6, T2.8, T6.6; replay T2.11, T3.15 |
+| **X29** Window first paint | B7: avatar launch and show-after-hide, Conversations/Configure cold and warm, light and dark OS theme | T2.3, T2.9, T2.10; replay T2.11 |
+| **X30** Audio smoothness and sync together | B6 plus F05 AC2/F15 AC2 under one run: start/stop/pause/duck/volume ramps, sentence gaps, bubble/mouth/voice alignment | T3.8, T3.10; replay T3.15 |
+
+Failures follow the same rule as other gates: record, fix within the selected design, or bring the
+measured tradeoff to the user. The quality ladder is never evidence of meeting B2.
+
 ## 4. Acceptance ledger — every AC has an owner
 
 IDs are stable: `AC-Fnn.k` for the kth numbered criterion in 12; an unnumbered AC is `.1`.
@@ -242,6 +260,13 @@ performance. NVIDIA is documented best-effort, not an undisclosed v1 acceptance 
   expressions and closure dominance. A dropped-frame estimate is not evidence of meeting the target.
   Include a high-refresh display if one is in scope; report rather than hide deficits.
   Hidden = no animation frames.
+- **Smoothness (X26–X30):** record refresh rate and scale; collect `requestAnimationFrame` intervals,
+  `PerformanceObserver` long tasks and Event Timing input-to-next-paint in the avatar renderer, gain
+  automation traces, and window first-frame timestamps. Run the scripted sequence launch → hover →
+  drag → Type → talk → interrupt → approve → hide/show → scale change, in normal and reduced motion,
+  idle and under a voice turn with local STT/TTS active. Report distributions (p50/p99/max) and
+  counts, not averages. Review a screen recording of the same run for pops and flashes as
+  supporting evidence only.
 - **Lip sync:** pin 30 synthesis texts, voice/model/speed, PCM fixture hashes and independently
   annotated /p b m/ intervals (human-reviewed audio landmarks, not `pred_dur` compared with itself).
   Assert every closure ≥40 ms at weight ≥0.9 within ±40 ms. Calibrate visual capture/audio offset

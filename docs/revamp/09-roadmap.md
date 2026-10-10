@@ -158,7 +158,8 @@ Tasks
       Show/Hide can be added now, while Stop/push-to-talk enable when their features land.
 
 **Exit:** install from a dev build, type a question, and watch the answer stream into the bubble
-while the avatar looks thoughtful. Dragging, the menu and Exit all work. It survives a core crash.
+while the avatar looks thoughtful, with every interaction meeting the liquid-smooth budgets (12 §0.5,
+X26–X29). Dragging, the menu and Exit all work. It survives a core crash.
 
 ---
 
@@ -313,7 +314,7 @@ Tasks
 | Performance | Golden viseme tracks; bilabial closure metric; final rig-weight goldens (not only intermediate curves); segment extent/pairing rejection; reviewed landmark corpus |
 | Permissions | Table-driven decision tests incl. path traversal and symlinks |
 | Protocol | Schema drift check; round-trip (Python → JSON → TS types) |
-| UI | Component tests for bubble/menu logic; manual demo checklist per phase (no heavy e2e in v1) |
+| UI | Component tests for bubble/menu logic; manual demo checklist per phase (no heavy e2e in v1); smoothness traces (frame intervals, long tasks, input-to-paint, gain ramps) per 14 §5 |
 | End to end | `--demo` mode with fake providers: a scripted run core ↔ headless avatar surface in CI (text + performance messages asserted) |
 | Platform | Manual checklist on Ubuntu 24.04 + 26.04 per release (02 §1.2 items, portal grants, multi-monitor, NVIDIA) |
 

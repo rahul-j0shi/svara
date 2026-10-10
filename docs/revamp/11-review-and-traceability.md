@@ -51,6 +51,7 @@ cross-feature test ledger is [14](14-acceptance-and-integration.md). All R1–R3
 | R36 | Start/use Svara from keyboard and terminal, including when it is not running | 01 §3a; 02 §1.2, §3.1; 12 F01/F09 | 2–3 | Covered; Talk/Show/Toggle/Configure have defined cold-start behaviour |
 | R37 | Turn it down/off at distinct levels | 02 §3.1; 12 F03/F11/F12/F38 | 2–7 | Covered: scale, hide, mic mute, output volume/pause, disable autostart, quit, uninstall/purge |
 | R38 | Right-click access to controls and configuration | 02 §3; 12 F03 | 2 | Covered with an exhaustive native-menu order and checked state |
+| R39 | The experience is liquid smooth (2026-10-10) | 17; 12 §0.5 B1–B9; ADR-0022; 14 §3.4 X26–X30 | 2–3, 6–7 | Covered in design; measured at T2.11/T3.15, published at T7.5 |
 
 ## 2. Gap log (review of the first version of this plan)
 
@@ -170,6 +171,7 @@ evidence is in [the review](../reviews/2026-10-09-engineering-review-rounds-1-5.
 | G90 | Universal language and rig claims exceeded tested coverage (SV-07) | Medium | 03 §4.6, 12 §0.1/F15, qualification matrix |
 | G91 | Unmeasured sentence-first latency confidence; "few hundred ms" cancellation waste (SV-04, SV-05) | Medium | 03 §3, 04 §5, 01 §5, T3.13 |
 | G92 | README claimed a `v0-prototype` tag that the remote does not have; Google STT justified by resume value | Low (credibility) | README, 04 §4, 16 §7 |
+| G93 | No plan for how interactions feel: input acknowledgement, continuity, jank, audio clicks, window flashes | High (UX) | 17, 12 §0.5, ADR-0022, 14 §3.4 |
 
 ## 3. Risk register (what can still go wrong)
 
@@ -185,6 +187,7 @@ evidence is in [the review](../reviews/2026-10-09-engineering-review-rounds-1-5.
 | The custom native-timing path shows no benefit over a reused baseline | Medium | Medium | Lab V-D.2 compares one baseline on the same corpus/rig; keep the simpler compatible option by recorded decision; any runtime/dependency change needs an ADR and user decision |
 | The chosen free avatar's terms or mouth capability are inadequate | Medium | Medium | ADR-0007 selection order; qualification report; one replacement, then a named missing capability before further search |
 | Output/display latency makes measured offset exceed 45 ms | Medium | High | Output-position sampling with recorded fallback; calibrated capture; unverified if precision is insufficient (ADR-0017) |
+| Higher frame rates during motion and the quality ladder push CPU over budget, or jank persists on the iGPU | Medium | High | Measure X27 early (lab V-E.2, T2.5); work off the animation path; the ladder is logged and never a budget waiver |
 | Lab work is mistaken for product progress | Medium | High | ADR-0021 evidence levels; lab units never tick tasks, gates or ACs |
 | Anthropic changes subscription terms again | High | Medium (subscription is now the default Claude path) | Same adapter layer has the API-key path; switching is one config value; Spike E gate; re-check terms before any public release |
 | Rendering or driver problems on 26.04 or NVIDIA that the dev machine can't reproduce | Medium | Medium | VM functional checks for 26.04; NVIDIA documented as best-effort with the env workaround; community bug reports triaged post-release |

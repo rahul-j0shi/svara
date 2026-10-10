@@ -271,7 +271,8 @@ The 15 internal visemes map to whatever the model has. This is data, not code:
   them into `Cue`s timed to the next word. Unknown tags are dropped.
 - **Fallback:** if the model uses no tags, a cheap rule-based sentiment on each sentence sets a mild
   default expression. You can switch this off.
-- **States drive ambient behaviour:** `listening` gives a slight head tilt and gaze at the user;
+- **States drive ambient behaviour** (every change blends with the `pose`/`expression` springs of
+  17 §2 and retargets from the current pose if interrupted, ADR-0022): `listening` gives a slight head tilt and gaze at the user;
   `thinking` gives gaze up-left and a slower blink; `acting` (tool running) gives a small "working"
   loop; `error` gives a brief `sad`.
 - **Idle layer (always on):** stochastic blinking (Poisson, with occasional double blinks), breathing,

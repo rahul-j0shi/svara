@@ -132,6 +132,27 @@ without a restart.
 | `launchAtLogin` | off | F01 |
 | `latencyOverlay` | off | F36 |
 
+### 0.5 Experience quality (global)
+
+Every surface must feel **liquid smooth**. These budgets apply to all features, like the privacy and
+permission rules, on the dev machine at scale 1.0 with the display refresh rate recorded. Design:
+[17](17-experience-and-motion.md); decision: ADR-0022; checks X26–X30 in 14 §3.4.
+
+| # | Budget | Limit |
+|---|---|---|
+| B1 | Input acknowledgement: double-click, right-click menu, Type, approval/bubble buttons, hover affordance | Visible response in the next painted frame ≤ 100 ms after the input event (Event Timing input-to-next-paint) |
+| B2 | Frame consistency while speaking, dragged, hovered or transitioning (60 fps target) | ≥ 99% of frame intervals ≤ 25 ms and none > 50 ms in each 60 s window; idle (30 fps): ≥ 99% ≤ 50 ms, none > 100 ms |
+| B3 | Avatar main-thread blocking | No task > 50 ms while speaking, dragged or transitioning; during an explicit model change each slice ≤ 100 ms while the previous model stays visible |
+| B4 | Drag tracking | Window follows the pointer with median lag ≤ 2 display frames; no jump on grab or release |
+| B5 | Transitions | Start ≤ 100 ms (F04 AC1), finish within their 17 §2 token; an interrupted transition continues from its current value without a discontinuity |
+| B6 | Audio gain changes (start, stop, pause, duck, volume, mute) | 5–20 ms ramp, no click; contained within F13/F27 stop bounds |
+| B7 | Windows | Avatar window maps only after its first rendered frame; Configure/Conversations show a themed first frame ≤ 400 ms warm (≤ 1 s cold); never a white or black flash |
+| B8 | Bubble and type box layout | Revealed words never move except during an animated resize or flip ≤ 220 ms |
+| B9 | Reduced motion | Sway, bounce and overshoot off; movement replaced by ≤ 150 ms opacity changes; blink and lip sync remain |
+
+A sustained miss may trigger the bounded quality ladder (17 §5), which is logged and never counts as
+meeting a budget. Earcons/state sounds remain out of scope (F04).
+
 ---
 
 ## F01 — App lifecycle
@@ -220,7 +241,8 @@ shutdown completes ≤ 5 s.
   hidden. Already-playing speech may continue; Hide is not Stop. A pending approval retains its
   deadline and denies on timeout. Timer/restore semantics are in 14 §3.1.
 - **Show on all workspaces:** the avatar is visible on every GNOME workspace (sticky).
-- **Frame rate:** 30 fps when idle and not hovered, 60 fps while speaking, 0 fps while hidden. The
+- **Frame rate:** 30 fps when idle and not hovered, 60 fps while speaking, hovered, dragged or
+  transitioning (§0.5), 0 fps while hidden. All animation advances by clock time. The
   limiter preserves the target's phase on any display refresh rate (no fewer frames on a faster
   display) and never renders catch-up bursts; on a display slower than the target, the deficit is
   reported, not hidden (ADR-0020). Mouth timing follows the audio clock, not the frame cadence.
@@ -1577,3 +1599,6 @@ same change.
   audio, F15 ownership/inventory/qualified languages, F18 independent landmarks, F40 `frameCount`.
   Reason: [engineering review SV-01–SV-24](../reviews/2026-10-09-engineering-review-rounds-1-5.md)
   showed these contracts were wrong or ambiguous. No AC was added or removed and no limit relaxed.
+- 2026-10-10 — §0.5 experience budgets B1–B9 and F02 frame-rate elevation during motion. Reason: the
+  user requires a liquid-smooth experience and no plan defined how it must feel (ADR-0022, 17). Global
+  checks X26–X30 in 14; no feature AC changed.

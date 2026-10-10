@@ -53,6 +53,7 @@ later drive a browser extension; that is planned for, not built.
 | 14 | [Acceptance & integration](14-acceptance-and-integration.md) | Every AC's owner/test ID, cross-feature contracts, remaining experiment gates and measurement methods |
 | 15 | [Developer handoff — start here](15-developer-handoff.md) | Exact current standing, reproducible commands, first work package, module/test locations and completion template |
 | 16 | [Lab track & review findings](16-lab-track-and-review-findings.md) | Fixture/lab/product evidence levels, the bounded speech/avatar lab work units and frozen corpus, owners for review findings SV-01–SV-24, items only the user can unblock |
+| 17 | [Experience & motion](17-experience-and-motion.md) | The liquid-smooth contract: motion tokens, choreography for every moment, perceived latency, render/audio rules, smoothness measurement and owners |
 
 ## Design principles
 
@@ -78,6 +79,10 @@ later drive a browser extension; that is planned for, not built.
    revertibility, permission engine, final mouth pose, operation ownership), CI, measured latency, a
    clear README with a demo video, and ADRs. Fixture, lab and product evidence are reported
    separately (ADR-0021); planned guarantees are never presented as implemented.
+
+8. **Liquid smooth.** Every input is acknowledged within 100 ms, every property moves continuously
+   (no pops, flashes or clicks), interrupted transitions continue from where they are, and the
+   render loop never waits on anything (17, 12 §0.5, ADR-0022).
 
 ## Key decisions at a glance
 
